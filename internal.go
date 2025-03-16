@@ -135,6 +135,41 @@ func (c APIClient) resourceGet(url string, dest any) (*types.APIResponse, error)
 	return nil, nil
 }
 
+func (c APIClient) resourceGetForm(url string, form Form, dest any) (*types.APIResponse, error) {
+	req, err := c.newFormRequest(
+		http.MethodGet,
+		url,
+		form,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("c.newFormRequest(): %w", err)
+	}
+
+	res, err := c.HTTPClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("c.HTTPClient.Get(): %w", err)
+	}
+	defer res.Body.Close()
+
+	decoder := json.NewDecoder(res.Body)
+
+	if res.StatusCode != 200 {
+		var r types.APIResponse
+
+		if err := decoder.Decode(&r); err != nil {
+			return nil, fmt.Errorf("decoder.Decode(): %w", err)
+		}
+
+		return &r, nil
+	}
+
+	if err := decoder.Decode(dest); err != nil {
+		return nil, fmt.Errorf("decoder.Decode(): %w", err)
+	}
+
+	return nil, nil
+}
+
 func (c APIClient) resourceCreate(url string, form Form) (*types.APIResponse, error) {
 	req, err := c.newFormRequest(
 		http.MethodPost,
@@ -159,4 +194,39 @@ func (c APIClient) resourceCreate(url string, form Form) (*types.APIResponse, er
 	}
 
 	return &r, nil
+}
+
+func (c APIClient) resourceCreateDecode(url string, form Form, dest any) (*types.APIResponse, error) {
+	req, err := c.newFormRequest(
+		http.MethodPost,
+		url,
+		form,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("c.NewFormRequest(): %w", err)
+	}
+
+	res, err := c.HTTPClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("c.HTTPClient.Do(): %w", err)
+	}
+	defer res.Body.Close()
+
+	decoder := json.NewDecoder(res.Body)
+
+	if res.StatusCode != 201 {
+		var r types.APIResponse
+
+		if err := decoder.Decode(&r); err != nil {
+			return nil, fmt.Errorf("decoder.Decode(): %w", err)
+		}
+
+		return &r, nil
+	}
+
+	if err := decoder.Decode(&dest); err != nil {
+		return nil, fmt.Errorf("decoder.Decode(): %w", err)
+	}
+
+	return nil, nil
 }

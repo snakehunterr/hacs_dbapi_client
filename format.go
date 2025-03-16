@@ -4,6 +4,7 @@ import (
 	"strconv"
 
 	types "github.com/snakehunterr/hacs_dbapi_types"
+	"github.com/snakehunterr/hacs_dbapi_types/validators"
 )
 
 func formatFloat64(f float64) string {
@@ -38,5 +39,14 @@ func formatRoom(r *types.Room) Form {
 		"client_id":         formatUint64(r.ClientID),
 		"room_area":         formatFloat64(r.Area),
 		"room_people_count": formatUint8(r.PeopleCount),
+	}
+}
+
+func formatPayment(p *types.Payment) Form {
+	return Form{
+		"client_id":      formatUint64(p.ClientID),
+		"room_id":        formatUint64(p.RoomID),
+		"payment_date":   p.Date.Format(validators.DATE_FORMAT),
+		"payment_amount": formatFloat64(p.Amount),
 	}
 }

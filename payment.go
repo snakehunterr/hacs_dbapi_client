@@ -1,204 +1,109 @@
 package api_client
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
-	"net/http"
-	"strconv"
 	"time"
 
 	types "github.com/snakehunterr/hacs_dbapi_types"
+	"github.com/snakehunterr/hacs_dbapi_types/validators"
 )
 
 func (c APIClient) PaymentGetAll() ([]types.Payment, *types.APIResponse, error) {
-	res, err := c.HTTPClient.Get(fmt.Sprintf("%s/payment/all", c.baseAPIURL))
-	if err != nil {
-		return nil, nil, fmt.Errorf("c.HTTPClient.Get(): %w", err)
-	}
-	defer res.Body.Close()
-
-	decoder := json.NewDecoder(res.Body)
-
-	if res.StatusCode != 200 {
-		var r types.APIResponse
-
-		if err := decoder.Decode(&r); err != nil {
-			return nil, nil, fmt.Errorf("decoder.Decode(): %w", err)
-		}
-
-		return nil, &r, nil
-	}
-
 	var ps []types.Payment
+	r, err := c.resourceGet(fmt.Sprintf("%s/payment/all", c.baseAPIURL), &ps)
 
-	if err := decoder.Decode(&ps); err != nil {
-		return nil, nil, fmt.Errorf("decoder.Decode(): %w", err)
+	switch {
+	case err != nil:
+		return nil, nil, err
+	case r != nil:
+		return nil, r, nil
+	default:
+		return ps, nil, nil
 	}
-
-	return ps, nil, nil
 }
 
 func (c APIClient) PaymentGetAllByClientID(id uint) ([]types.Payment, *types.APIResponse, error) {
-	res, err := c.HTTPClient.Get(fmt.Sprintf("%s/payment/client_id/%d", c.baseAPIURL, id))
-	if err != nil {
-		return nil, nil, fmt.Errorf("c.HTTPClient.Get(): %w", err)
-	}
-	defer res.Body.Close()
-
-	decoder := json.NewDecoder(res.Body)
-
-	if res.StatusCode != 200 {
-		var r types.APIResponse
-
-		if err := decoder.Decode(&r); err != nil {
-			return nil, nil, fmt.Errorf("decoder.Decode(): %w", err)
-		}
-
-		return nil, &r, nil
-	}
-
 	var ps []types.Payment
+	r, err := c.resourceGet(fmt.Sprintf("%s/payment/client/id/%d", c.baseAPIURL, id), &ps)
 
-	if err := decoder.Decode(&ps); err != nil {
-		return nil, nil, fmt.Errorf("decoder.Decode(): %w", err)
+	switch {
+	case err != nil:
+		return nil, nil, err
+	case r != nil:
+		return nil, r, nil
+	default:
+		return ps, nil, nil
 	}
-
-	return ps, nil, nil
 }
 
 func (c APIClient) PaymentGetAllByRoomID(id uint) ([]types.Payment, *types.APIResponse, error) {
-	res, err := c.HTTPClient.Get(fmt.Sprintf("%s/payment/room_id/%d", c.baseAPIURL, id))
-	if err != nil {
-		return nil, nil, fmt.Errorf("c.HTTPClient.Get(): %w", err)
-	}
-	defer res.Body.Close()
-
-	decoder := json.NewDecoder(res.Body)
-
-	if res.StatusCode != 200 {
-		var r types.APIResponse
-
-		if err := decoder.Decode(&r); err != nil {
-			return nil, nil, fmt.Errorf("decoder.Decode(): %w", err)
-		}
-
-		return nil, &r, nil
-	}
-
 	var ps []types.Payment
+	r, err := c.resourceGet(fmt.Sprintf("%s/payment/room/id/%d", c.baseAPIURL, id), &ps)
 
-	if err := decoder.Decode(&ps); err != nil {
-		return nil, nil, fmt.Errorf("decoder.Decode(): %w", err)
+	switch {
+	case err != nil:
+		return nil, nil, err
+	case r != nil:
+		return nil, r, nil
+	default:
+		return ps, nil, nil
 	}
-
-	return ps, nil, nil
 }
 
 func (c APIClient) PaymentGetByID(id uint) (*types.Payment, *types.APIResponse, error) {
-	res, err := c.HTTPClient.Get(fmt.Sprintf("%s/payment/id/%d", c.baseAPIURL, id))
-	if err != nil {
-		return nil, nil, fmt.Errorf("c.HTTPClient.Get(): %w", err)
-	}
-	defer res.Body.Close()
-
-	decoder := json.NewDecoder(res.Body)
-
-	if res.StatusCode != 200 {
-		var r types.APIResponse
-
-		if err := decoder.Decode(&r); err != nil {
-			return nil, nil, fmt.Errorf("decoder.Decode(): %w", err)
-		}
-
-		return nil, &r, nil
-	}
-
 	var p types.Payment
+	r, err := c.resourceGet(fmt.Sprintf("%s/payment/id/%d", c.baseAPIURL, id), &p)
 
-	if err := decoder.Decode(&p); err != nil {
-		return nil, nil, fmt.Errorf("decoder.Decode(): %w", err)
+	switch {
+	case err != nil:
+		return nil, nil, err
+	case r != nil:
+		return nil, r, nil
+	default:
+		return &p, nil, nil
 	}
-
-	return &p, nil, nil
 }
 
 func (c APIClient) PaymentGetByDate(date time.Time) ([]types.Payment, *types.APIResponse, error) {
-	datestr := date.Format("2006-01-02")
-	res, err := c.HTTPClient.Get(fmt.Sprintf("%s/payment/date/%s", c.baseAPIURL, datestr))
-	if err != nil {
-		return nil, nil, fmt.Errorf("c.HTTPClient.Get(): %w", err)
-	}
-	defer res.Body.Close()
-
-	decoder := json.NewDecoder(res.Body)
-
-	if res.StatusCode != 200 {
-		var r types.APIResponse
-
-		if err := decoder.Decode(&r); err != nil {
-			return nil, nil, fmt.Errorf("decoder.Decode(): %w", err)
-		}
-
-		return nil, &r, nil
-	}
-
 	var ps []types.Payment
+	r, err := c.resourceGet(
+		fmt.Sprintf("%s/payment/date/%s",
+			c.baseAPIURL,
+			date.Format(validators.DATE_FORMAT),
+		),
+		&ps,
+	)
 
-	if err := decoder.Decode(&ps); err != nil {
-		return nil, nil, fmt.Errorf("decoder.Decode(): %w", err)
+	switch {
+	case err != nil:
+		return nil, nil, err
+	case r != nil:
+		return nil, r, nil
+	default:
+		return ps, nil, nil
 	}
-
-	return ps, nil, nil
 }
 
-func (c APIClient) PaymentGetByDateRange(date_start *time.Time, date_end *time.Time) ([]types.Payment, *types.APIResponse, error) {
-	if date_start == nil && date_end == nil {
-		return nil, nil, errors.New("both date_start and date_end is nil")
-	}
-
-	form := Form{}
-	if date_start != nil {
-		form["date_start"] = date_start.Format("2006-01-02")
-	}
-	if date_end != nil {
-		form["date_end"] = date_end.Format("2006-01-02")
-	}
-
-	req, err := c.newFormRequest(
-		http.MethodPost,
-		fmt.Sprintf("%s/payment/date_range", c.baseAPIURL),
-		form,
-	)
-	if err != nil {
-		return nil, nil, fmt.Errorf("c.NewFormRequest(): %w", err)
-	}
-
-	res, err := c.HTTPClient.Do(req)
-	if err != nil {
-		return nil, nil, fmt.Errorf("c.HTTPClient.Do(): %w", err)
-	}
-	defer res.Body.Close()
-
-	decoder := json.NewDecoder(res.Body)
-
-	if res.StatusCode != 200 {
-		var r types.APIResponse
-
-		if err := decoder.Decode(&r); err != nil {
-			return nil, nil, fmt.Errorf("decoder.Decode(): %w", err)
-		}
-
-		return nil, &r, nil
-	}
-
+func (c APIClient) PaymentGetByDateRange(date_start time.Time, date_end time.Time) ([]types.Payment, *types.APIResponse, error) {
 	var ps []types.Payment
+	r, err := c.resourceGetForm(
+		fmt.Sprintf("%s/payment/date_range", c.baseAPIURL),
+		Form{
+			"date_start": date_start.Format(validators.DATE_FORMAT),
+			"date_end":   date_end.Format(validators.DATE_FORMAT),
+		},
+		&ps,
+	)
 
-	if err := decoder.Decode(&ps); err != nil {
-		return nil, nil, fmt.Errorf("decoder.Decode(): %w", err)
+	switch {
+	case err != nil:
+		return nil, nil, err
+	case r != nil:
+		return nil, r, nil
+	default:
+		return ps, nil, nil
 	}
-
-	return ps, nil, nil
 }
 
 func (c APIClient) PaymentCreate(p *types.Payment) (*types.APIResponse, error) {
@@ -206,34 +111,22 @@ func (c APIClient) PaymentCreate(p *types.Payment) (*types.APIResponse, error) {
 		return nil, errors.New("*types.Payment is nil")
 	}
 
-	req, err := c.newFormRequest(
-		http.MethodPost,
+	var _p types.Payment
+	r, err := c.resourceCreateDecode(
 		fmt.Sprintf("%s/payment/new", c.baseAPIURL),
-		Form{
-			"client_id":      strconv.FormatUint(uint64(p.ClientID), 10),
-			"room_id":        strconv.FormatUint(uint64(p.RoomID), 10),
-			"payment_date":   p.Date.Format("2006-01-02"),
-			"payment_amount": fmt.Sprintf("%.2f", p.Amount),
-		},
+		formatPayment(p),
+		&_p,
 	)
-	if err != nil {
-		return nil, fmt.Errorf("c.NewFormRequest(): %w", err)
+
+	switch {
+	case err != nil:
+		return nil, err
+	case r != nil:
+		return r, nil
 	}
 
-	res, err := c.HTTPClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("c.HTTPClient.Do(): %w", err)
-	}
-	defer res.Body.Close()
-
-	decoder := json.NewDecoder(res.Body)
-	var r types.APIResponse
-
-	if err := decoder.Decode(&r); err != nil {
-		return nil, fmt.Errorf("decoder.Decode(): %w", err)
-	}
-
-	return &r, nil
+	p.ID = _p.ID
+	return nil, nil
 }
 
 func (c APIClient) PaymentDelete(id uint) (*types.APIResponse, error) {
@@ -245,32 +138,8 @@ func (c APIClient) PaymentPatch(p *types.Payment) (*types.APIResponse, error) {
 		return nil, errors.New("*types.Payment is nil")
 	}
 
-	req, err := c.newFormRequest(
-		http.MethodPatch,
+	return c.resourcePatch(
 		fmt.Sprintf("%s/payment/id/%d", c.baseAPIURL, p.ID),
-		Form{
-			"client_id":      strconv.FormatUint(uint64(p.ClientID), 10),
-			"room_id":        strconv.FormatUint(uint64(p.RoomID), 10),
-			"payment_date":   p.Date.Format("2006-01-02"),
-			"payment_amount": fmt.Sprintf("%.2f", p.Amount),
-		},
+		formatPayment(p),
 	)
-	if err != nil {
-		return nil, fmt.Errorf("c.NewFormRequest(): %w", err)
-	}
-
-	res, err := c.HTTPClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("c.HTTPClient.Do(): %w", err)
-	}
-	defer res.Body.Close()
-
-	decoder := json.NewDecoder(res.Body)
-	var r types.APIResponse
-
-	if err := decoder.Decode(&r); err != nil {
-		return nil, fmt.Errorf("decoder.Decode(): %w", err)
-	}
-
-	return &r, nil
 }
