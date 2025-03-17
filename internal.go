@@ -135,9 +135,9 @@ func (c APIClient) resourceGet(url string, dest any) (*types.APIResponse, error)
 	return nil, nil
 }
 
-func (c APIClient) resourceGetForm(url string, form Form, dest any) (*types.APIResponse, error) {
+func (c APIClient) resourcePost(url string, form Form, dest any) (*types.APIResponse, error) {
 	req, err := c.newFormRequest(
-		http.MethodGet,
+		http.MethodPost,
 		url,
 		form,
 	)
@@ -147,7 +147,7 @@ func (c APIClient) resourceGetForm(url string, form Form, dest any) (*types.APIR
 
 	res, err := c.HTTPClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("c.HTTPClient.Get(): %w", err)
+		return nil, fmt.Errorf("c.HTTPClient.Do(): %w", err)
 	}
 	defer res.Body.Close()
 

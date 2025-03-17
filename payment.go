@@ -23,7 +23,7 @@ func (c APIClient) PaymentGetAll() ([]types.Payment, *types.APIResponse, error) 
 	}
 }
 
-func (c APIClient) PaymentGetAllByClientID(id uint) ([]types.Payment, *types.APIResponse, error) {
+func (c APIClient) PaymentGetAllByClientID(id uint64) ([]types.Payment, *types.APIResponse, error) {
 	var ps []types.Payment
 	r, err := c.resourceGet(fmt.Sprintf("%s/payment/client/id/%d", c.baseAPIURL, id), &ps)
 
@@ -37,7 +37,7 @@ func (c APIClient) PaymentGetAllByClientID(id uint) ([]types.Payment, *types.API
 	}
 }
 
-func (c APIClient) PaymentGetAllByRoomID(id uint) ([]types.Payment, *types.APIResponse, error) {
+func (c APIClient) PaymentGetAllByRoomID(id uint64) ([]types.Payment, *types.APIResponse, error) {
 	var ps []types.Payment
 	r, err := c.resourceGet(fmt.Sprintf("%s/payment/room/id/%d", c.baseAPIURL, id), &ps)
 
@@ -51,7 +51,7 @@ func (c APIClient) PaymentGetAllByRoomID(id uint) ([]types.Payment, *types.APIRe
 	}
 }
 
-func (c APIClient) PaymentGetByID(id uint) (*types.Payment, *types.APIResponse, error) {
+func (c APIClient) PaymentGetByID(id uint64) (*types.Payment, *types.APIResponse, error) {
 	var p types.Payment
 	r, err := c.resourceGet(fmt.Sprintf("%s/payment/id/%d", c.baseAPIURL, id), &p)
 
@@ -87,8 +87,8 @@ func (c APIClient) PaymentGetByDate(date time.Time) ([]types.Payment, *types.API
 
 func (c APIClient) PaymentGetByDateRange(date_start time.Time, date_end time.Time) ([]types.Payment, *types.APIResponse, error) {
 	var ps []types.Payment
-	r, err := c.resourceGetForm(
-		fmt.Sprintf("%s/payment/date_range", c.baseAPIURL),
+	r, err := c.resourcePost(
+		fmt.Sprintf("%s/payment/date/range", c.baseAPIURL),
 		Form{
 			"date_start": date_start.Format(validators.DATE_FORMAT),
 			"date_end":   date_end.Format(validators.DATE_FORMAT),
@@ -129,7 +129,7 @@ func (c APIClient) PaymentCreate(p *types.Payment) (*types.APIResponse, error) {
 	return nil, nil
 }
 
-func (c APIClient) PaymentDelete(id uint) (*types.APIResponse, error) {
+func (c APIClient) PaymentDelete(id uint64) (*types.APIResponse, error) {
 	return c.resourceDelete(fmt.Sprintf("%s/payment/id/%d", c.baseAPIURL, id))
 }
 

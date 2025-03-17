@@ -11,119 +11,61 @@ import (
 func Test_client_get_by_id(t *testing.T) {
 	var (
 		client = NewAPIClient(os.Getenv("HACS_DBAPI_HOST"), os.Getenv("HACS_DBAPI_PORT"))
-		c      *types.Client
-		r      *types.APIResponse
+		res    *types.APIResponse
 		err    error
-		_c     = types.Client{ID: 100, Name: "foo", IsAdmin: false}
+		c      = &types.Client{ID: 1, Name: "foo", IsAdmin: false}
 	)
 
-	_, err = client.ClientCreate(&_c)
+	res, err = client.ClientCreate(c)
 	if err != nil {
 		t.Fatal("ClientCreate err:", err)
 	}
+	if res == nil {
+		t.Fatal("ClientCreate *types.APIResponse is nil")
+	}
+	if res.Error != nil {
+		t.Fatal("ClientCreate *APIError:", res.Error)
+	}
 
-	// 200
-	c, r, err = client.ClientGetByID(_c.ID)
+	_c, res, err := client.ClientGetByID(c.ID)
 	if err != nil {
-		t.Fatal("ClientGetByID (existing id) returns err:", err)
+		t.Fatal("ClientGetByID:", err)
 	}
 
-	if r != nil {
-		t.Fatal("ClientGetByID (existing id) returns APIResponse:", r)
+	if res != nil {
+		t.Fatal("ClientGetByID *types.APIResponse:", res)
 	}
 
-	if c == nil {
-		t.Fatal("ClientGetByID (existing id) types.Client is nil")
+	if _c == nil {
+		t.Fatal("ClientGetByID *types.Client is nil")
 	}
 
 	if c.ID != _c.ID {
-		t.Fatal("ClientGetByID (existing id) returns types.Client with wrong ID (!= 100):", c)
-	}
-
-	_, err = client.ClientDelete(_c.ID)
-	if err != nil {
-		t.Fatal("ClientDelete err:", err)
-	}
-
-	// 404
-	c, r, err = client.ClientGetByID(_c.ID)
-	if err != nil {
-		t.Fatal("ClientGetByID (non existing id) returns err:", err)
-	}
-
-	if r == nil {
-		t.Fatal("ClientGetByID (non existing id) APIResponse is nil")
-	}
-
-	if !api_errors.IsChildErr(r.Error, api_errors.ErrSQLNoRows) {
-		t.Fatal("ClientGetByID (non existing id) incorrect APIError:", r.Error)
-	}
-}
-
-func Test_client_create_and_delete(t *testing.T) {
-	var (
-		client = NewAPIClient(os.Getenv("HACS_DBAPI_HOST"), os.Getenv("HACS_DBAPI_PORT"))
-		c      *types.Client
-		r      *types.APIResponse
-		err    error
-
-		_c = &types.Client{
-			ID:   12345,
-			Name: "some",
-		}
-	)
-
-	r, err = client.ClientCreate(_c)
-	if err != nil {
-		t.Fatal("ClientCreate returns err:", err)
-	}
-	if r == nil {
-		t.Fatal("ClientCreate APIResponse is nil")
-	}
-	if r.Error != nil {
-		t.Fatal("ClientCreate APIResponse error:", r.Error)
-	}
-
-	c, r, err = client.ClientGetByID(_c.ID)
-	if err != nil {
-		t.Fatal("ClientGetByID err:", err)
-	}
-	if r != nil {
-		t.Fatal("ClientGetByID APIResponse:", r)
-	}
-	if c == nil {
-		t.Fatal("ClientGetByID client is nil")
-	}
-	if c.ID != _c.ID {
-		t.Fatal("ClientCreate incorrect id, client:", c)
+		t.Fatal("ClientGetByID returns wrong ID")
 	}
 	if c.Name != _c.Name {
-		t.Fatal("ClientCreate incorrect name, client:", c)
+		t.Fatal("ClientGetByID returns wrong Name")
 	}
-	if c.IsAdmin != false {
-		t.Fatal("ClientCreate incorrect is_admin, client:", c)
+	if c.IsAdmin != _c.IsAdmin {
+		t.Fatal("ClientGetByID returns wrong IsAdmin")
 	}
 
-	r, err = client.ClientDelete(_c.ID)
+	_, err = client.ClientDelete(c.ID)
 	if err != nil {
 		t.Fatal("ClientDelete err:", err)
 	}
-	if r.Error != nil {
-		t.Fatal("ClientDelete *APIError:", r.Error)
+
+	c, res, err = client.ClientGetByID(c.ID)
+	if err != nil {
+		t.Fatal("ClientGetByID (non existing id):", err)
 	}
 
-	c, r, err = client.ClientGetByID(_c.ID)
-	if err != nil {
-		t.Fatal("ClientGetByID (after delete) err:", err)
+	if res == nil {
+		t.Fatal("ClientGetByID (non existing id) *types.APIResponse is nil")
 	}
-	if c != nil {
-		t.Fatal("ClientGetByID (after delete) client:", c)
-	}
-	if r == nil {
-		t.Fatal("ClientGetByID (after delete) APIResponse is nil")
-	}
-	if !api_errors.IsChildErr(r.Error, api_errors.ErrSQLNoRows) {
-		t.Fatal("ClientGetByID (after delete) incorrect APIError:", r.Error)
+
+	if !api_errors.IsChildErr(res.Error, api_errors.ErrSQLNoRows) {
+		t.Fatal("ClientGetByID (non existing id) wrong *APIError:", res.Error)
 	}
 }
 
@@ -134,22 +76,29 @@ func Test_client_get_all(t *testing.T) {
 		r      *types.APIResponse
 		err    error
 
-		c1 = &types.Client{ID: 2201, Name: "hahaha"}
-		c2 = &types.Client{ID: 2202, Name: "hahaha"}
-		c3 = &types.Client{ID: 2203, Name: "hahaha"}
+		c1 = &types.Client{ID: 1, Name: "hahaha"}
+		c2 = &types.Client{ID: 2, Name: "hahaha"}
+		c3 = &types.Client{ID: 3, Name: "hahaha"}
 	)
 
-	_, err = client.ClientCreate(c1)
-	if err != nil {
-		t.Fatal(err)
-	}
-	_, err = client.ClientCreate(c2)
-	if err != nil {
-		t.Fatal(err)
-	}
-	_, err = client.ClientCreate(c3)
-	if err != nil {
-		t.Fatal(err)
+	for _, c := range []*types.Client{c1, c2, c3} {
+		res, err := client.ClientCreate(c)
+		if err != nil {
+			t.Fatal("ClientCreate:", err)
+		}
+		if res.Error != nil {
+			t.Fatal("ClientCreate *APIError:", res.Error)
+		}
+
+		defer func(c *types.Client) {
+			res, err := client.ClientDelete(c.ID)
+			if err != nil {
+				t.Fatal("ClientDelete:", err)
+			}
+			if res.Error != nil {
+				t.Fatal("ClientDelete *APIError:", res.Error)
+			}
+		}(c)
 	}
 
 	// 200
@@ -163,13 +112,9 @@ func Test_client_get_all(t *testing.T) {
 		t.Fatal("ClientGetAll returns APIResponse:", r)
 	}
 
-	if len(cs) < 3 {
+	if len(cs) != 3 {
 		t.Fatal("ClientGetAll should returns []types.Client with len at least 3:", cs)
 	}
-
-	client.ClientDelete(c1.ID)
-	client.ClientDelete(c2.ID)
-	client.ClientDelete(c3.ID)
 }
 
 func Test_client_patch(t *testing.T) {
@@ -178,7 +123,7 @@ func Test_client_patch(t *testing.T) {
 		c      *types.Client
 		r      *types.APIResponse
 		err    error
-		_c     = &types.Client{ID: 12345, Name: "hahaha"}
+		_c     = &types.Client{ID: 1, Name: "hahaha"}
 	)
 
 	_, err = client.ClientCreate(_c)
@@ -242,9 +187,9 @@ func Test_client_get_admins(t *testing.T) {
 	)
 
 	as := []types.Client{
-		{ID: 10010, Name: "hahaha", IsAdmin: true},
-		{ID: 10011, Name: "hahaha", IsAdmin: true},
-		{ID: 10012, Name: "hahaha", IsAdmin: true},
+		{ID: 1, Name: "hahaha", IsAdmin: true},
+		{ID: 2, Name: "hahaha", IsAdmin: true},
+		{ID: 3, Name: "hahaha", IsAdmin: true},
 	}
 
 	for _, c := range as {
