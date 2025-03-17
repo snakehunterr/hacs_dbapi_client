@@ -50,3 +50,10 @@ func formatPayment(p *types.Payment) Form {
 		"payment_amount": formatFloat64(p.Amount),
 	}
 }
+
+func formatExpense(e *types.Expense) Form {
+	return Form{
+		"expense_date":   e.Date.Format(validators.DATE_FORMAT),
+		"expense_amount": formatFloat64(e.Amount),
+	}
+}
