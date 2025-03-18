@@ -1,117 +1,85 @@
 package api_client
 
-// package api_client
+import (
+	"errors"
+	"fmt"
+	"time"
 
-// import (
-// 	"errors"
-// 	"fmt"
-// 	"time"
+	types "github.com/snakehunterr/hacs_dbapi_types"
+	"github.com/snakehunterr/hacs_dbapi_types/validators"
+)
 
-// 	types "github.com/snakehunterr/hacs_dbapi_types"
-// 	"github.com/snakehunterr/hacs_dbapi_types/validators"
-// )
+func (c APIClient) ExpenseGetAll() ([]types.Expense, error) {
+	var es []types.Expense
+	err := c.resourceGet(fmt.Sprintf("%s/expense/all", c.baseAPIURL), &es)
 
-// func (c APIClient) ExpenseGetAll() ([]types.Expense, *types.APIResponse, error) {
-// 	var es []types.Expense
+	return es, err
+}
 
-// 	res, err := c.resourceGet(fmt.Sprintf("%s/expense/all", c.baseAPIURL), &es)
-// 	switch {
-// 	case err != nil:
-// 		return nil, nil, err
-// 	case res != nil:
-// 		return nil, res, nil
-// 	default:
-// 		return es, nil, nil
-// 	}
-// }
+func (c APIClient) ExpenseGetByID(id int64) (*types.Expense, error) {
+	var e types.Expense
+	err := c.resourceGet(fmt.Sprintf("%s/expense/id/%d", c.baseAPIURL, id), &e)
 
-// func (c APIClient) ExpenseGetByID(id int64) (*types.Expense, *types.APIResponse, error) {
-// 	var e types.Expense
+	if err != nil {
+		return nil, err
+	} else {
+		return &e, nil
+	}
+}
 
-// 	res, err := c.resourceGet(fmt.Sprintf("%s/expense/id/%d", c.baseAPIURL, id), &e)
-// 	switch {
-// 	case err != nil:
-// 		return nil, nil, err
-// 	case res != nil:
-// 		return nil, res, nil
-// 	default:
-// 		return &e, nil, nil
-// 	}
-// }
+func (c APIClient) ExpenseGetByDate(date time.Time) ([]types.Expense, error) {
+	var es []types.Expense
+	err := c.resourceGet(
+		fmt.Sprintf("%s/expense/date/%s", c.baseAPIURL, date.Format(validators.DATE_FORMAT)),
+		&es,
+	)
 
-// func (c APIClient) ExpenseGetByDate(date time.Time) ([]types.Expense, *types.APIResponse, error) {
-// 	var es []types.Expense
+	return es, err
+}
 
-// 	res, err := c.resourceGet(
-// 		fmt.Sprintf("%s/expense/date/%s", c.baseAPIURL, date.Format(validators.DATE_FORMAT)),
-// 		&es,
-// 	)
-// 	switch {
-// 	case err != nil:
-// 		return nil, nil, err
-// 	case res != nil:
-// 		return nil, res, nil
-// 	default:
-// 		return es, nil, nil
-// 	}
-// }
+func (c APIClient) ExpenseGetByDateRange(date_start time.Time, date_end time.Time) ([]types.Expense, error) {
+	var es []types.Expense
+	err := c.resourcePost(
+		fmt.Sprintf("%s/expense/date/range", c.baseAPIURL),
+		Form{
+			"date_start": date_start.Format(validators.DATE_FORMAT),
+			"date_end":   date_end.Format(validators.DATE_FORMAT),
+		},
+		&es,
+	)
 
-// func (c APIClient) ExpenseGetByDateRange(date_start time.Time, date_end time.Time) ([]types.Expense, *types.APIResponse, error) {
-// 	var es []types.Expense
+	return es, err
+}
 
-// 	res, err := c.resourcePost(
-// 		fmt.Sprintf("%s/expense/date/range", c.baseAPIURL),
-// 		Form{
-// 			"date_start": date_start.Format(validators.DATE_FORMAT),
-// 			"date_end":   date_end.Format(validators.DATE_FORMAT),
-// 		},
-// 		&es,
-// 	)
+func (c APIClient) ExpenseCreate(date time.Time, amount float64) (*types.Expense, error) {
+	var e = types.Expense{
+		Date:   date,
+		Amount: amount,
+	}
+	err := c.resourceCreateWithDecode(
+		fmt.Sprintf("%s/expense/new", c.baseAPIURL),
+		formatExpense(&e),
+		&e,
+	)
 
-// 	switch {
-// 	case err != nil:
-// 		return nil, nil, err
-// 	case res != nil:
-// 		return nil, res, nil
-// 	default:
-// 		return es, nil, nil
-// 	}
-// }
+	if err != nil {
+		return nil, err
+	} else {
+		return &e, nil
+	}
+}
 
-// func (c APIClient) ExpenseCreate(e *types.Expense) (*types.APIResponse, error) {
-// 	if e == nil {
-// 		return nil, errors.New("*types.Expense is nil")
-// 	}
+func (c APIClient) ExpenseDelete(id int64) error {
+	return c.resourceDelete(fmt.Sprintf("%s/expense/id/%d", c.baseAPIURL, id))
+}
 
-// 	var _e types.Expense
-// 	res, err := c.resourceCreateDecode(
-// 		fmt.Sprintf("%s/expense/new", c.baseAPIURL),
-// 		formatExpense(e),
-// 		&_e,
-// 	)
+func (c APIClient) ExpensePatch(e *types.Expense) error {
+	if e == nil {
+		return errors.New("*types.Expense is nil")
+	}
 
-// 	switch {
-// 	case err != nil:
-// 		return nil, err
-// 	case res != nil:
-// 		return res, nil
-// 	}
-
-// 	e.ID = _e.ID
-// 	return nil, nil
-// }
-
-// func (c APIClient) ExpenseDelete(id int64) (*types.APIResponse, error) {
-// 	return c.resourceDelete(fmt.Sprintf("%s/expense/id/%d", c.baseAPIURL, id))
-// }
-
-// func (c APIClient) ExpensePatch(e *types.Expense) (*types.APIResponse, error) {
-// 	if e == nil {
-// 		return nil, errors.New("*types.Expense is nil")
-// 	}
-
-// 	return c.resourcePatch(
-// 		fmt.Sprintf("%s/expense/id/%d", c.baseAPIURL, e.ID),
-// 		formatExpense(e),
-// 	)
-// }
+	return c.resourcePatch(
+		fmt.Sprintf("%s/expense/id/%d", c.baseAPIURL, e.ID),
+		formatExpense(e),
+	)
+}

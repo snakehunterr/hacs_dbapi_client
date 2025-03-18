@@ -41,6 +41,13 @@ func newTestPayment(client_id int64, room_id int64) *types.Payment {
 	}
 }
 
+func newTestExpense() *types.Expense {
+	return &types.Expense{
+		Date:   time.Now(),
+		Amount: rand.Float64(),
+	}
+}
+
 func newTestDate(value string) time.Time {
 	v, _ := time.Parse("2006-01-02", value)
 	return v

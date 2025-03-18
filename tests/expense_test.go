@@ -1,352 +1,268 @@
 package api_client
 
-// package api_client
+import (
+	"encoding/json"
+	"testing"
+	"time"
 
-// import (
-// 	"os"
-// 	"testing"
-// 	"time"
+	types "github.com/snakehunterr/hacs_dbapi_types"
+	api_errors "github.com/snakehunterr/hacs_dbapi_types/errors"
+)
 
-// 	types "github.com/snakehunterr/hacs_dbapi_types"
-// 	api_errors "github.com/snakehunterr/hacs_dbapi_types/errors"
-// 	"github.com/snakehunterr/hacs_dbapi_types/validators"
-// )
+func Test_expense_create_delete(t *testing.T) {
+	var (
+		e   = newTestExpense()
+		_e  *types.Expense
+		err error
+	)
 
-// func Test_expense_get_by_id(t *testing.T) {
-// 	var (
-// 		client = NewAPIClient(os.Getenv("HACS_DBAPI_HOST"), os.Getenv("HACS_DBAPI_PORT"))
-// 		e      = &types.Expense{
-// 			Date:   time.Now(),
-// 			Amount: 9.99,
-// 		}
-// 	)
+	_e, err = client.ExpenseCreate(e.Date, e.Amount)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _e == nil {
+		t.Fatal()
+	}
 
-// 	res, err := client.ExpenseCreate(e)
-// 	if err != nil {
-// 		t.Fatal("ExpenseCreate:", err)
-// 	}
-// 	if res != nil {
-// 		t.Fatal("ExpenseCreate *types.APIResponse:", res)
-// 	}
-// 	if e.ID == 0 {
-// 		t.Fatal("ExpenseCreate *e.ID is 0")
-// 	}
+	err = client.ExpenseDelete(_e.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
 
-// 	_e, res, err := client.ExpenseGetByID(e.ID)
-// 	if err != nil {
-// 		t.Fatal("ExpenseGetByID:", err)
-// 	}
-// 	if res != nil {
-// 		t.Fatal("ExpenseGetByID *types.APIResponse:", res)
-// 	}
-// 	if _e == nil {
-// 		t.Fatal("ExpenseGetByID *types.Expense is nil")
-// 	}
-// 	if _e.ID != e.ID {
-// 		t.Fatal("ExpenseGetByID returns wrong e.ID")
-// 	}
-// 	if _e.Date.Format(validators.DATE_FORMAT) != e.Date.Format(validators.DATE_FORMAT) {
-// 		t.Fatal("ExpenseGetByID returns wrong e.Date")
-// 	}
-// 	if _e.Amount != e.Amount {
-// 		t.Fatal("ExpenseGetByID returns wrong e.Amount")
-// 	}
+func Test_expense_get_by_id(t *testing.T) {
+	var (
+		e   = newTestExpense()
+		_e  *types.Expense
+		__e *types.Expense
+		err error
+	)
 
-// 	_e, res, err = client.ExpenseGetByID(0)
-// 	if err != nil {
-// 		t.Fatal("ExpenseGetByID:", err)
-// 	}
-// 	if _e != nil {
-// 		t.Fatal("ExpenseGetByID unexpected *types.Expense:", _e)
-// 	}
-// 	if !api_errors.IsChildErr(res.Error, api_errors.ErrSQLNoRows) {
-// 		t.Fatal("ExpenseGetByID unexpected *APIError:", res.Error)
-// 	}
+	_e, err = client.ExpenseGetByID(1234445)
+	if err == nil {
+		t.Fatal(_e)
+	}
 
-// 	res, err = client.ExpenseDelete(e.ID)
-// 	if err != nil {
-// 		t.Fatal("ExpenseDelete:", err)
-// 	}
-// 	if res == nil {
-// 		t.Fatal("ExpenseDelete *types.APIResponse is nil")
-// 	}
-// 	if res.Error != nil {
-// 		t.Fatal("ExpenseDelete *APIError:", res.Error)
-// 	}
-// }
+	_e, _ = client.ExpenseCreate(e.Date, e.Amount)
+	defer client.ExpenseDelete(_e.ID)
 
-// func Test_expense_get_all(t *testing.T) {
-// 	var (
-// 		client = NewAPIClient(os.Getenv("HACS_DBAPI_HOST"), os.Getenv("HACS_DBAPI_PORT"))
-// 	)
+	__e, err = client.ExpenseGetByID(_e.ID)
+	if err != nil {
+		t.Fatal()
+	}
+	if !float_equal(_e.Amount, __e.Amount) ||
+		!date_equal(_e.Date, __e.Date) {
+		_ejson, _ := json.MarshalIndent(_e, "", "\t")
+		__ejson, _ := json.MarshalIndent(__e, "", "\t")
+		t.Fatalf("_e:\n%s\n__e:\n%s", _ejson, __ejson)
+	}
+}
 
-// 	es := []*types.Expense{
-// 		{Date: time.Now(), Amount: 1.99},
-// 		{Date: time.Now(), Amount: 2.99},
-// 		{Date: time.Now(), Amount: 3.99},
-// 		{Date: time.Now(), Amount: 4.99},
-// 		{Date: time.Now(), Amount: 5.99},
-// 	}
+func Test_expense_get_all(t *testing.T) {
+	var (
+		es = []*types.Expense{
+			newTestExpense(),
+			newTestExpense(),
+			newTestExpense(),
+			newTestExpense(),
+			newTestExpense(),
+		}
+		_es []types.Expense
+		err error
+	)
 
-// 	for _, e := range es {
-// 		res, err := client.ExpenseCreate(e)
-// 		if err != nil {
-// 			t.Fatal("ExpenseCreate:", err)
-// 		}
-// 		if res != nil {
-// 			t.Fatal("ExpenseCreate *types.APIResponse:", res)
-// 		}
-// 		if e.ID == 0 {
-// 			t.Fatal("ExpenseCreate e.ID is 0")
-// 		}
-// 	}
+	_es, err = client.ExpenseGetAll()
+	if err == nil {
+		t.Fatal(_es)
+	}
 
-// 	_es, res, err := client.ExpenseGetAll()
-// 	if err != nil {
-// 		t.Fatal("ExpenseGetAll:", err)
-// 	}
-// 	if res != nil {
-// 		t.Fatal("ExpenseGetAll *types.APIResponse:", res)
-// 	}
-// 	if len(_es) != len(es) {
-// 		t.Fatal("ExpenseGetAll returns:", _es)
-// 	}
+	for _, e := range es {
+		_e, _ := client.ExpenseCreate(e.Date, e.Amount)
+		defer client.ExpenseDelete(_e.ID)
+	}
 
-// 	for _, e := range es {
-// 		res, err := client.ExpenseDelete(e.ID)
-// 		if err != nil {
-// 			t.Fatal("ExpenseDelete:", err)
-// 		}
-// 		if res == nil {
-// 			t.Fatal("ExpenseDelete *types.APIResponse is nil")
-// 		}
-// 		if res.Error != nil {
-// 			t.Fatal("ExpenseDelete *APIError:", res.Error)
-// 		}
-// 	}
-// }
+	_es, err = client.ExpenseGetAll()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(_es) != len(es) {
+		t.Fatal()
+	}
+}
 
-// func Test_expense_get_by_date(t *testing.T) {
-// 	var (
-// 		client = NewAPIClient(os.Getenv("HACS_DBAPI_HOST"), os.Getenv("HACS_DBAPI_PORT"))
-// 	)
+func Test_expense_get_by_date(t *testing.T) {
+	var (
+		d1 = newTestDate("2000-01-10")
+		d2 = newTestDate("2014-05-13")
+		es = []types.Expense{
+			{Date: d1, Amount: 1},
+			{Date: d2, Amount: 1},
+			{Date: d2, Amount: 1},
+			{Date: d1, Amount: 1},
+			{Date: d1, Amount: 1},
+			{Date: d2, Amount: 1},
+			{Date: d2, Amount: 1},
+			{Date: d1, Amount: 1},
+		}
+		_es []types.Expense
+		err error
+	)
 
-// 	t1, _ := time.Parse("2006-01-02", "2014-01-10")
-// 	t2, _ := time.Parse("2006-01-02", "2014-01-20")
+	_es, err = client.ExpenseGetByDate(d1)
+	if err == nil {
+		t.Fatal(_es)
+	}
+	_es, err = client.ExpenseGetByDate(d2)
+	if err == nil {
+		t.Fatal(_es)
+	}
 
-// 	es := []*types.Expense{
-// 		{Date: t1, Amount: 1},
-// 		{Date: t2, Amount: 1},
-// 		{Date: t1, Amount: 1},
-// 	}
+	d1_count := 0
+	d2_count := 0
+	for _, e := range es {
+		switch {
+		case date_equal(e.Date, d1):
+			d1_count++
+		case date_equal(e.Date, d2):
+			d2_count++
+		}
 
-// 	for _, e := range es {
-// 		res, err := client.ExpenseCreate(e)
-// 		if err != nil {
-// 			t.Fatal("ExpenseCreate:", err)
-// 		}
-// 		if res != nil {
-// 			t.Fatal("ExpenseCreate *types.APIResponse:", res)
-// 		}
-// 		if e.ID == 0 {
-// 			t.Fatal("ExpenseCreate e.ID is 0")
-// 		}
-// 	}
+		_e, _ := client.ExpenseCreate(e.Date, e.Amount)
+		defer client.ExpenseDelete(_e.ID)
+	}
 
-// 	_es, res, err := client.ExpenseGetByDate(t1)
-// 	if err != nil {
-// 		t.Fatal("ExpenseGetByDate:", err)
-// 	}
-// 	if res != nil {
-// 		t.Fatal("ExpenseGetByDate *types.APIResponse:", res)
-// 	}
-// 	if len(_es) != 2 {
-// 		t.Fatal("ExpenseGetByDate returns:", _es)
-// 	}
+	_es, err = client.ExpenseGetByDate(d1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(_es) != d1_count {
+		t.Fatal(_es, len(_es), d1_count)
+	}
 
-// 	_es, res, err = client.ExpenseGetByDate(t2)
-// 	if err != nil {
-// 		t.Fatal("ExpenseGetByDate:", err)
-// 	}
-// 	if res != nil {
-// 		t.Fatal("ExpenseGetByDate *types.APIResponse:", res)
-// 	}
-// 	if len(_es) != 1 {
-// 		t.Fatal("ExpenseGetByDate returns:", _es)
-// 	}
+	_es, err = client.ExpenseGetByDate(d2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(_es) != d2_count {
+		t.Fatal(_es, len(_es), d2_count)
+	}
+}
 
-// 	for _, e := range es {
-// 		res, err := client.ExpenseDelete(e.ID)
-// 		if err != nil {
-// 			t.Fatal("ExpenseDelete:", err)
-// 		}
-// 		if res == nil {
-// 			t.Fatal("ExpenseDelete *types.APIResponse is nil")
-// 		}
-// 		if res.Error != nil {
-// 			t.Fatal("ExpenseDelete *APIError:", res.Error)
-// 		}
-// 	}
-// }
+func Test_expense_get_by_date_range(t *testing.T) {
+	var (
+		d1 = newTestDate("2000-01-10")
+		d2 = newTestDate("2000-01-20")
+		d3 = newTestDate("2000-01-30")
+		d4 = newTestDate("2000-02-10")
+		es = []types.Expense{
+			{Date: d2, Amount: 1}, {Date: d1, Amount: 1},
+			{Date: d1, Amount: 1}, {Date: d2, Amount: 1},
+			{Date: d3, Amount: 1}, {Date: d2, Amount: 1},
+			{Date: d1, Amount: 1}, {Date: d1, Amount: 1},
+			{Date: d1, Amount: 1}, {Date: d2, Amount: 1},
+			{Date: d3, Amount: 1}, {Date: d1, Amount: 1},
+			{Date: d2, Amount: 1}, {Date: d1, Amount: 1},
+			{Date: d1, Amount: 1}, {Date: d2, Amount: 1},
+		}
+		_es []types.Expense
+		err error
+	)
 
-// func Test_expense_get_by_date_range(t *testing.T) {
+	var check func(time.Time, time.Time)
 
-// 	var (
-// 		client = NewAPIClient(os.Getenv("HACS_DBAPI_HOST"), os.Getenv("HACS_DBAPI_PORT"))
-// 	)
+	check = func(d1, d2 time.Time) {
+		_es, err = client.ExpenseGetByDateRange(d1, d2)
+		if err == nil {
+			t.Fatal(d1, d2, _es)
+		}
+	}
 
-// 	t1, _ := time.Parse("2006-01-02", "2014-01-10")
-// 	t2, _ := time.Parse("2006-01-02", "2014-01-20")
-// 	t3, _ := time.Parse("2006-01-02", "2014-01-30")
-// 	t4, _ := time.Parse("2006-01-02", "2014-02-20")
+	dates := [][]time.Time{
+		{d1, d1}, {d2, d1}, {d3, d1}, {d4, d1},
+		{d1, d2}, {d2, d2}, {d3, d2}, {d4, d2},
+		{d1, d3}, {d2, d3}, {d3, d3}, {d4, d3},
+		{d1, d4}, {d2, d4}, {d3, d4}, {d4, d4},
+	}
 
-// 	es := []*types.Expense{
-// 		{Date: t1, Amount: 1},
-// 		{Date: t2, Amount: 1},
-// 		{Date: t3, Amount: 1},
-// 	}
+	for _, grp := range dates {
+		check(grp[0], grp[1])
+	}
 
-// 	for _, e := range es {
-// 		res, err := client.ExpenseCreate(e)
-// 		if err != nil {
-// 			t.Fatal("ExpenseCreate:", err)
-// 		}
-// 		if res != nil {
-// 			t.Fatal("ExpenseCreate *types.APIResponse:", res)
-// 		}
-// 		if e.ID == 0 {
-// 			t.Fatal("ExpenseCreate e.ID is 0")
-// 		}
-// 	}
+	check = func(d1, d2 time.Time) {
+		count := 0
+		for _, e := range es {
+			if !(e.Date.After(d1) || e.Date.Equal(d1)) {
+				continue
+			}
+			if !(d2.After(e.Date) || d2.Equal(e.Date)) {
+				continue
+			}
+			count++
+		}
 
-// 	_es, res, err := client.ExpenseGetByDateRange(t1, t1)
-// 	if err != nil {
-// 		t.Fatal("ExpenseGetByDateRange:", err)
-// 	}
-// 	if res != nil {
-// 		t.Fatal("ExpenseGetByDateRange *types.APIResponse:", res)
-// 	}
-// 	if len(_es) != 1 {
-// 		t.Fatal("ExpenseGetByDateRange returns:", _es)
-// 	}
+		_es, err = client.ExpenseGetByDateRange(d1, d2)
+		if err != nil {
+			if api_errors.IsChildErr(err, api_errors.ErrSQLNoRows) && count == 0 {
+				return
+			}
+			t.Fatal(err)
+		}
+		if len(_es) != count {
+			js, _ := json.MarshalIndent(_es, "", "\t")
+			t.Fatalf("len(%d); count(%d)\n%s", len(_es), count, js)
+		}
+	}
 
-// 	_es, res, err = client.ExpenseGetByDateRange(t1, t2)
-// 	if err != nil {
-// 		t.Fatal("ExpenseGetByDateRange:", err)
-// 	}
-// 	if res != nil {
-// 		t.Fatal("ExpenseGetByDateRange *types.APIResponse:", res)
-// 	}
-// 	if len(_es) != 2 {
-// 		t.Fatal("ExpenseGetByDateRange returns:", _es)
-// 	}
+	for _, e := range es {
+		_e, _ := client.ExpenseCreate(e.Date, e.Amount)
+		defer client.ExpenseDelete(_e.ID)
+	}
 
-// 	_es, res, err = client.ExpenseGetByDateRange(t1, t3)
-// 	if err != nil {
-// 		t.Fatal("ExpenseGetByDateRange:", err)
-// 	}
-// 	if res != nil {
-// 		t.Fatal("ExpenseGetByDateRange *types.APIResponse:", res)
-// 	}
-// 	if len(_es) != 3 {
-// 		t.Fatal("ExpenseGetByDateRange returns:", _es)
-// 	}
+	for _, grp := range dates {
+		check(grp[0], grp[1])
+	}
+}
 
-// 	_es, res, err = client.ExpenseGetByDateRange(t1, t4)
-// 	if err != nil {
-// 		t.Fatal("ExpenseGetByDateRange:", err)
-// 	}
-// 	if res != nil {
-// 		t.Fatal("ExpenseGetByDateRange *types.APIResponse:", res)
-// 	}
-// 	if len(_es) != 3 {
-// 		t.Fatal("ExpenseGetByDateRange returns:", _es)
-// 	}
+func Test_expense_patch(t *testing.T) {
+	var (
+		e   = newTestExpense()
+		_e  *types.Expense
+		err error
+	)
 
-// 	for _, e := range es {
-// 		res, err := client.ExpenseDelete(e.ID)
-// 		if err != nil {
-// 			t.Fatal("ExpenseDelete:", err)
-// 		}
-// 		if res == nil {
-// 			t.Fatal("ExpenseDelete *types.APIResponse is nil")
-// 		}
-// 		if res.Error != nil {
-// 			t.Fatal("ExpenseDelete *APIError:", res.Error)
-// 		}
-// 	}
-// }
+	e.ID = 12345
+	err = client.ExpensePatch(e)
+	if err == nil {
+		t.Fatal()
+	}
 
-// func Test_expense_patch(t *testing.T) {
-// 	var (
-// 		client = NewAPIClient(os.Getenv("HACS_DBAPI_HOST"), os.Getenv("HACS_DBAPI_PORT"))
-// 		e      = &types.Expense{
-// 			Date:   time.Now(),
-// 			Amount: 22.22,
-// 		}
-// 	)
+	_e, _ = client.ExpenseCreate(e.Date, e.Amount)
+	defer client.ExpenseDelete(_e.ID)
+	e.ID = _e.ID
 
-// 	res, err := client.ExpenseCreate(e)
-// 	if err != nil {
-// 		t.Fatal("ExpenseCreate:", err)
-// 	}
-// 	if res != nil {
-// 		t.Fatal("ExpenseCreate *types.APIResponse:", res)
-// 	}
-// 	if e.ID == 0 {
-// 		t.Fatal("ExpenseCreate *e.ID is 0")
-// 	}
-// 	defer func() {
-// 		res, err := client.ExpenseDelete(e.ID)
-// 		if err != nil {
-// 			t.Fatal("ExpenseDelete:", err)
-// 		}
-// 		if res == nil {
-// 			t.Fatal("ExpenseDelete *types.APIResponse is nil")
-// 		}
-// 		if res.Error != nil {
-// 			t.Fatal("ExpenseDelete *APIError:", res.Error)
-// 		}
-// 	}()
+	check := func() {
+		err = client.ExpensePatch(e)
+		if err != nil {
+			t.Fatal(err)
+		}
 
-// 	check := func() {
-// 		res, err := client.ExpensePatch(e)
-// 		if err != nil {
-// 			t.Fatal("ExpensePatch:", err)
-// 		}
-// 		if res == nil {
-// 			t.Fatal("ExpensePatch *types.APIResponse is nil")
-// 		}
-// 		if res.Error != nil {
-// 			t.Fatal("ExpensePatch *APIError:", res.Error)
-// 		}
+		_e, _ = client.ExpenseGetByID(e.ID)
 
-// 		_e, res, err := client.ExpenseGetByID(e.ID)
-// 		if err != nil {
-// 			t.Fatal("ExpenseGetByID:", err)
-// 		}
-// 		if res != nil {
-// 			t.Fatal("ExpenseGetByID *types.APIResponse:", res)
-// 		}
+		if !float_equal(e.Amount, _e.Amount) ||
+			!date_equal(e.Date, _e.Date) {
+			ejson, _ := json.MarshalIndent(e, "", "\t")
+			_ejson, _ := json.MarshalIndent(_e, "", "\t")
+			t.Fatalf("e:\n%s\n_e:\n%s\n", ejson, _ejson)
+		}
+	}
 
-// 		if _e.ID != e.ID {
-// 			t.Fatal("ExpensePatch wrong e.ID")
-// 		}
-// 		if _e.Date.Format(validators.DATE_FORMAT) != e.Date.Format(validators.DATE_FORMAT) {
-// 			t.Fatal("ExpensePatch wrong e.Date")
-// 		}
-// 		if _e.Amount != e.Amount {
-// 			t.Fatal("ExpensePatch wrong e.Amount")
-// 		}
-// 	}
+	e.Date = time.Now().Add(time.Hour*123 + time.Second*12345)
+	check()
 
-// 	e.Amount = 10.5
-// 	check()
+	e.Amount = 0.88
+	check()
 
-// 	e.Date = time.Now().Add(time.Hour*12345 + time.Minute*12345 + time.Second*12345)
-// 	check()
-
-// 	e.Date = time.Now()
-// 	e.Amount = 0.11
-// 	check()
-// }
+	e.Date = time.Now()
+	e.Amount = 1234.1234
+	check()
+}

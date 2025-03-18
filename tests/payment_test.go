@@ -339,9 +339,27 @@ func Test_payment_get_by_date_range(t *testing.T) {
 			{ClientID: c.ID, RoomID: r.ID, Date: d2, Amount: 1},
 			{ClientID: c.ID, RoomID: r.ID, Date: d1, Amount: 1},
 		}
-		_ps []types.Payment
-		err error
+		dates = [][]time.Time{
+			{d1, d1}, {d2, d1}, {d3, d1}, {d4, d1},
+			{d1, d2}, {d2, d2}, {d3, d2}, {d4, d2},
+			{d1, d3}, {d2, d3}, {d3, d3}, {d4, d3},
+			{d1, d4}, {d2, d4}, {d3, d4}, {d4, d4},
+		}
+		_ps   []types.Payment
+		err   error
+		check func(d1, d2 time.Time)
 	)
+
+	check = func(d1, d2 time.Time) {
+		_ps, err = client.PaymentGetByDateRange(d1, d2)
+		if err == nil {
+			t.Fatal(_ps)
+		}
+	}
+
+	for _, grp := range dates {
+		check(grp[0], grp[1])
+	}
 
 	_ps, err = client.PaymentGetByDateRange(d1, d4)
 	if err == nil {
@@ -358,7 +376,7 @@ func Test_payment_get_by_date_range(t *testing.T) {
 		defer client.PaymentDelete(_p.ID)
 	}
 
-	check := func(d1, d2 time.Time) {
+	check = func(d1, d2 time.Time) {
 		count := 0
 		for _, p := range ps {
 			if (p.Date.After(d1) || date_equal(d1, p.Date)) &&
@@ -380,13 +398,9 @@ func Test_payment_get_by_date_range(t *testing.T) {
 		}
 	}
 
-	check(d1, d2)
-	check(d1, d3)
-	check(d1, d4)
-	check(d1, d1)
-	check(d2, d2)
-	check(d3, d3)
-	check(d3, d2)
+	for _, grp := range dates {
+		check(grp[0], grp[1])
+	}
 }
 
 func Test_payment_patch(t *testing.T) {
