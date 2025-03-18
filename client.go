@@ -7,7 +7,7 @@ import (
 	types "github.com/snakehunterr/hacs_dbapi_types"
 )
 
-func (c APIClient) ClientGetByID(id uint64) (*types.Client, *types.APIResponse, error) {
+func (c APIClient) ClientGetByID(id int64) (*types.Client, *types.APIResponse, error) {
 	var client types.Client
 	r, err := c.resourceGet(fmt.Sprintf("%s/client/id/%d", c.baseAPIURL, id), &client)
 
@@ -74,7 +74,7 @@ func (c APIClient) ClientCreate(client *types.Client) (*types.APIResponse, error
 	)
 }
 
-func (c APIClient) ClientDelete(id uint64) (*types.APIResponse, error) {
+func (c APIClient) ClientDelete(id int64) (*types.APIResponse, error) {
 	return c.resourceDelete(fmt.Sprintf("%s/client/id/%d", c.baseAPIURL, id))
 }
 

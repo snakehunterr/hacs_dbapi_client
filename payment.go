@@ -23,7 +23,7 @@ func (c APIClient) PaymentGetAll() ([]types.Payment, *types.APIResponse, error) 
 	}
 }
 
-func (c APIClient) PaymentGetAllByClientID(id uint64) ([]types.Payment, *types.APIResponse, error) {
+func (c APIClient) PaymentGetAllByClientID(id int64) ([]types.Payment, *types.APIResponse, error) {
 	var ps []types.Payment
 	r, err := c.resourceGet(fmt.Sprintf("%s/payment/client/id/%d", c.baseAPIURL, id), &ps)
 
@@ -37,7 +37,7 @@ func (c APIClient) PaymentGetAllByClientID(id uint64) ([]types.Payment, *types.A
 	}
 }
 
-func (c APIClient) PaymentGetAllByRoomID(id uint64) ([]types.Payment, *types.APIResponse, error) {
+func (c APIClient) PaymentGetAllByRoomID(id int64) ([]types.Payment, *types.APIResponse, error) {
 	var ps []types.Payment
 	r, err := c.resourceGet(fmt.Sprintf("%s/payment/room/id/%d", c.baseAPIURL, id), &ps)
 
@@ -51,7 +51,7 @@ func (c APIClient) PaymentGetAllByRoomID(id uint64) ([]types.Payment, *types.API
 	}
 }
 
-func (c APIClient) PaymentGetByID(id uint64) (*types.Payment, *types.APIResponse, error) {
+func (c APIClient) PaymentGetByID(id int64) (*types.Payment, *types.APIResponse, error) {
 	var p types.Payment
 	r, err := c.resourceGet(fmt.Sprintf("%s/payment/id/%d", c.baseAPIURL, id), &p)
 
@@ -129,7 +129,7 @@ func (c APIClient) PaymentCreate(p *types.Payment) (*types.APIResponse, error) {
 	return nil, nil
 }
 
-func (c APIClient) PaymentDelete(id uint64) (*types.APIResponse, error) {
+func (c APIClient) PaymentDelete(id int64) (*types.APIResponse, error) {
 	return c.resourceDelete(fmt.Sprintf("%s/payment/id/%d", c.baseAPIURL, id))
 }
 

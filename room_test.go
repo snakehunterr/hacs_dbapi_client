@@ -216,7 +216,7 @@ func Test_room_get_all_by_client_id(t *testing.T) {
 		if _, err := client.ClientCreate(c); err != nil {
 			t.Fatal("ClientCreate err:", err)
 		}
-		defer func(id uint64) {
+		defer func(id int64) {
 			if _, err := client.ClientDelete(id); err != nil {
 				t.Fatal("ClientDelete err:", err)
 			}
@@ -281,7 +281,7 @@ func Test_room_patch(t *testing.T) {
 		if _, err := client.ClientCreate(c); err != nil {
 			t.Fatal("ClientCreate err:", err)
 		}
-		defer func(id uint64) {
+		defer func(id int64) {
 			if _, err := client.ClientDelete(id); err != nil {
 				t.Fatal("ClientDelete err:", err)
 			}

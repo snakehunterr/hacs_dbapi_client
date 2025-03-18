@@ -23,7 +23,7 @@ func (c APIClient) ExpenseGetAll() ([]types.Expense, *types.APIResponse, error) 
 	}
 }
 
-func (c APIClient) ExpenseGetByID(id uint64) (*types.Expense, *types.APIResponse, error) {
+func (c APIClient) ExpenseGetByID(id int64) (*types.Expense, *types.APIResponse, error) {
 	var e types.Expense
 
 	res, err := c.resourceGet(fmt.Sprintf("%s/expense/id/%d", c.baseAPIURL, id), &e)
@@ -99,7 +99,7 @@ func (c APIClient) ExpenseCreate(e *types.Expense) (*types.APIResponse, error) {
 	return nil, nil
 }
 
-func (c APIClient) ExpenseDelete(id uint64) (*types.APIResponse, error) {
+func (c APIClient) ExpenseDelete(id int64) (*types.APIResponse, error) {
 	return c.resourceDelete(fmt.Sprintf("%s/expense/id/%d", c.baseAPIURL, id))
 }
 

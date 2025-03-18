@@ -21,7 +21,7 @@ func (c APIClient) RoomGetAll() ([]types.Room, *types.APIResponse, error) {
 	}
 }
 
-func (c APIClient) RoomGetByID(id uint64) (*types.Room, *types.APIResponse, error) {
+func (c APIClient) RoomGetByID(id int64) (*types.Room, *types.APIResponse, error) {
 	var r types.Room
 
 	res, err := c.resourceGet(fmt.Sprintf("%s/room/id/%d", c.baseAPIURL, id), &r)
@@ -35,7 +35,7 @@ func (c APIClient) RoomGetByID(id uint64) (*types.Room, *types.APIResponse, erro
 	}
 }
 
-func (c APIClient) RoomGetAllByClientID(id uint64) ([]types.Room, *types.APIResponse, error) {
+func (c APIClient) RoomGetAllByClientID(id int64) ([]types.Room, *types.APIResponse, error) {
 	var rs []types.Room
 
 	res, err := c.resourceGet(fmt.Sprintf("%s/room/client/id/%d", c.baseAPIURL, id), &rs)
@@ -60,7 +60,7 @@ func (c APIClient) RoomCreate(r *types.Room) (*types.APIResponse, error) {
 	)
 }
 
-func (c APIClient) RoomDelete(id uint64) (*types.APIResponse, error) {
+func (c APIClient) RoomDelete(id int64) (*types.APIResponse, error) {
 	return c.resourceDelete(fmt.Sprintf("%s/room/id/%d", c.baseAPIURL, id))
 }
 

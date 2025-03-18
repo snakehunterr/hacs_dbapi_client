@@ -6,3 +6,5 @@ github.com/snakehunterr/hacs_dbapi_types v0.0.0-20250315201314-fef070725f2e h1:v
 github.com/snakehunterr/hacs_dbapi_types v0.0.0-20250315201314-fef070725f2e/go.mod h1:rboDxDiSVl8BU2/GJCemBYLVL8ScuUIHhpFod5uMq2Y=
 github.com/snakehunterr/hacs_dbapi_types v0.0.0-20250316180309-2c5354d946fd h1:PEnhvxTp3BjKV+epC0OLFVVZxZkf82gO+eeuoG+SGp4=
 github.com/snakehunterr/hacs_dbapi_types v0.0.0-20250316180309-2c5354d946fd/go.mod h1:rboDxDiSVl8BU2/GJCemBYLVL8ScuUIHhpFod5uMq2Y=
+github.com/snakehunterr/hacs_dbapi_types v0.0.0-20250318121807-c1ccfcbe6b94 h1:f3QhpSotxSa5KHwlYECBJGnJ/6dZ1UhjxzixRZc7JI8=
+github.com/snakehunterr/hacs_dbapi_types v0.0.0-20250318121807-c1ccfcbe6b94/go.mod h1:rboDxDiSVl8BU2/GJCemBYLVL8ScuUIHhpFod5uMq2Y=
