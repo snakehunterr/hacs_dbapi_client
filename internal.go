@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 
@@ -12,7 +13,7 @@ import (
 
 type Form = map[string]string
 
-func NewAPIClient(host string, port string) APIClient {
+func New(host string, port string) APIClient {
 	if host == "" {
 		panic("Empty arg: host")
 	}
@@ -21,23 +22,13 @@ func NewAPIClient(host string, port string) APIClient {
 	}
 	return APIClient{
 		HTTPClient: &http.Client{},
-		apiHost:    host,
-		apiPort:    port,
 		baseAPIURL: fmt.Sprintf("http://%s:%s/api", host, port),
-		Debug:      false,
 	}
 }
 
 type APIClient struct {
 	HTTPClient *http.Client
-	Debug      bool
-	apiHost    string
-	apiPort    string
 	baseAPIURL string
-}
-
-func (c *APIClient) SetDebug(mode bool) {
-	c.Debug = mode
 }
 
 func (c APIClient) newFormRequest(method string, apiurl string, form Form) (*http.Request, error) {
@@ -61,172 +52,114 @@ func (c APIClient) newFormRequest(method string, apiurl string, form Form) (*htt
 	return req, nil
 }
 
-func (c APIClient) resourceDelete(url string) (*types.APIResponse, error) {
-	req, err := http.NewRequest(
-		http.MethodDelete,
-		url,
-		nil,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("http.NewRequest(): %w", err)
-	}
-
+func (c APIClient) request(req *http.Request) error {
 	res, err := c.HTTPClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("c.HTTPClient.Do(): %w", err)
+		return fmt.Errorf("c.HTTPClient.Do(): %w", err)
 	}
 	defer res.Body.Close()
 
-	decoder := json.NewDecoder(res.Body)
-	var r types.APIResponse
-
-	if err := decoder.Decode(&r); err != nil {
-		return nil, fmt.Errorf("decoder.Decode(): %w", err)
+	bs, err := io.ReadAll(res.Body)
+	if err != nil {
+		return fmt.Errorf("io.ReadAll() err: %w", err)
 	}
 
-	return &r, nil
+	var r types.APIResponse
+
+	if err := json.Unmarshal(bs, &r); err != nil {
+		return fmt.Errorf("json.Unmarshal() err: %w, res.Body(): %s", err, bs)
+	}
+
+	if r.Error != nil {
+		return r.Error
+	}
+
+	return nil
 }
 
-func (c APIClient) resourcePatch(url string, form Form) (*types.APIResponse, error) {
+func (c APIClient) requestWithDecode(req *http.Request, dest any) error {
+	res, err := c.HTTPClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("c.HTTPClient.Do(): %w", err)
+	}
+	defer res.Body.Close()
+
+	bs, err := io.ReadAll(res.Body)
+	if err != nil {
+		return fmt.Errorf("io.ReadAll() err: %w", err)
+	}
+
+	if res.StatusCode >= 400 {
+		var r types.APIResponse
+
+		if err := json.Unmarshal(bs, &r); err != nil {
+			return fmt.Errorf("json.Unmarshal() err: %w, res.Body(): %s", err, bs)
+		}
+
+		if r.Error != nil {
+			return r.Error
+		}
+
+		return nil
+	}
+
+	if err := json.Unmarshal(bs, dest); err != nil {
+		return fmt.Errorf("json.Unmarshal() err: %w, res.Body(): %s", err, bs)
+	}
+
+	return nil
+}
+
+func (c APIClient) resourcePatch(url string, form Form) error {
 	req, err := c.newFormRequest(http.MethodPatch, url, form)
 	if err != nil {
-		return nil, fmt.Errorf("c.newFormRequest(): %w", err)
+		return fmt.Errorf("c.newFormRequest(): %w", err)
 	}
 
-	res, err := c.HTTPClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("c.HTTPClient.Do(): %w", err)
-	}
-	defer res.Body.Close()
-
-	decoder := json.NewDecoder(res.Body)
-	var r types.APIResponse
-
-	if err := decoder.Decode(&r); err != nil {
-		return nil, fmt.Errorf("c.HTTPClient.Do(): %w", err)
-	}
-
-	return &r, nil
+	return c.request(req)
 }
 
-func (c APIClient) resourceGet(url string, dest any) (*types.APIResponse, error) {
-	res, err := c.HTTPClient.Get(url)
+func (c APIClient) resourceGet(url string, dest any) error {
+	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		return nil, fmt.Errorf("c.HTTPClient.Get(): %w", err)
-	}
-	defer res.Body.Close()
-
-	decoder := json.NewDecoder(res.Body)
-
-	if res.StatusCode != 200 {
-		var r types.APIResponse
-
-		if err := decoder.Decode(&r); err != nil {
-			return nil, fmt.Errorf("decoder.Decode(): %w", err)
-		}
-
-		return &r, nil
+		return fmt.Errorf("http.NewRequest(): %w", err)
 	}
 
-	if err := decoder.Decode(dest); err != nil {
-		return nil, fmt.Errorf("decoder.Decode(): %w", err)
-	}
-
-	return nil, nil
+	return c.requestWithDecode(req, dest)
 }
 
-func (c APIClient) resourcePost(url string, form Form, dest any) (*types.APIResponse, error) {
-	req, err := c.newFormRequest(
-		http.MethodPost,
-		url,
-		form,
-	)
+func (c APIClient) resourcePost(url string, form Form, dest any) error {
+	req, err := c.newFormRequest(http.MethodPost, url, form)
 	if err != nil {
-		return nil, fmt.Errorf("c.newFormRequest(): %w", err)
+		return fmt.Errorf("c.newFormRequest(): %w", err)
 	}
 
-	res, err := c.HTTPClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("c.HTTPClient.Do(): %w", err)
-	}
-	defer res.Body.Close()
-
-	decoder := json.NewDecoder(res.Body)
-
-	if res.StatusCode != 200 {
-		var r types.APIResponse
-
-		if err := decoder.Decode(&r); err != nil {
-			return nil, fmt.Errorf("decoder.Decode(): %w", err)
-		}
-
-		return &r, nil
-	}
-
-	if err := decoder.Decode(dest); err != nil {
-		return nil, fmt.Errorf("decoder.Decode(): %w", err)
-	}
-
-	return nil, nil
+	return c.requestWithDecode(req, dest)
 }
 
-func (c APIClient) resourceCreate(url string, form Form) (*types.APIResponse, error) {
-	req, err := c.newFormRequest(
-		http.MethodPost,
-		url,
-		form,
-	)
+func (c APIClient) resourceCreate(url string, form Form) error {
+	req, err := c.newFormRequest(http.MethodPost, url, form)
 	if err != nil {
-		return nil, fmt.Errorf("c.NewFormRequest(): %w", err)
+		return fmt.Errorf("c.NewFormRequest(): %w", err)
 	}
 
-	res, err := c.HTTPClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("c.HTTPClient.Do(): %w", err)
-	}
-	defer res.Body.Close()
-
-	decoder := json.NewDecoder(res.Body)
-	var r types.APIResponse
-
-	if err := decoder.Decode(&r); err != nil {
-		return nil, fmt.Errorf("decoder.Decode(): %w", err)
-	}
-
-	return &r, nil
+	return c.request(req)
 }
 
-func (c APIClient) resourceCreateDecode(url string, form Form, dest any) (*types.APIResponse, error) {
-	req, err := c.newFormRequest(
-		http.MethodPost,
-		url,
-		form,
-	)
+func (c APIClient) resourceCreateWithDecode(url string, form Form, dest any) error {
+	req, err := c.newFormRequest(http.MethodPost, url, form)
 	if err != nil {
-		return nil, fmt.Errorf("c.NewFormRequest(): %w", err)
+		return fmt.Errorf("c.NewFormRequest(): %w", err)
 	}
 
-	res, err := c.HTTPClient.Do(req)
+	return c.requestWithDecode(req, dest)
+}
+
+func (c APIClient) resourceDelete(url string) error {
+	req, err := http.NewRequest(http.MethodDelete, url, nil)
 	if err != nil {
-		return nil, fmt.Errorf("c.HTTPClient.Do(): %w", err)
-	}
-	defer res.Body.Close()
-
-	decoder := json.NewDecoder(res.Body)
-
-	if res.StatusCode != 201 {
-		var r types.APIResponse
-
-		if err := decoder.Decode(&r); err != nil {
-			return nil, fmt.Errorf("decoder.Decode(): %w", err)
-		}
-
-		return &r, nil
+		return fmt.Errorf("http.NewRequest(): %w", err)
 	}
 
-	if err := decoder.Decode(&dest); err != nil {
-		return nil, fmt.Errorf("decoder.Decode(): %w", err)
-	}
-
-	return nil, nil
+	return c.request(req)
 }
