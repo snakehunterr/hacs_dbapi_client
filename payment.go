@@ -11,49 +11,28 @@ package api_client
 // 	"github.com/snakehunterr/hacs_dbapi_types/validators"
 // )
 
-// func (c APIClient) PaymentGetAll() ([]types.Payment, *types.APIResponse, error) {
+// func (c APIClient) PaymentGetAll() ([]types.Payment, error) {
 // 	var ps []types.Payment
-// 	r, err := c.resourceGet(fmt.Sprintf("%s/payment/all", c.baseAPIURL), &ps)
+// 	err := c.resourceGet(fmt.Sprintf("%s/payment/all", c.baseAPIURL), &ps)
 
-// 	switch {
-// 	case err != nil:
-// 		return nil, nil, err
-// 	case r != nil:
-// 		return nil, r, nil
-// 	default:
-// 		return ps, nil, nil
-// 	}
+// 	return ps, err
 // }
 
-// func (c APIClient) PaymentGetAllByClientID(id int64) ([]types.Payment, *types.APIResponse, error) {
+// func (c APIClient) PaymentGetAllByClientID(id int64) ([]types.Payment, error) {
 // 	var ps []types.Payment
-// 	r, err := c.resourceGet(fmt.Sprintf("%s/payment/client/id/%d", c.baseAPIURL, id), &ps)
+// 	err := c.resourceGet(fmt.Sprintf("%s/payment/client/id/%d", c.baseAPIURL, id), &ps)
 
-// 	switch {
-// 	case err != nil:
-// 		return nil, nil, err
-// 	case r != nil:
-// 		return nil, r, nil
-// 	default:
-// 		return ps, nil, nil
-// 	}
+// 	return ps, err
 // }
 
-// func (c APIClient) PaymentGetAllByRoomID(id int64) ([]types.Payment, *types.APIResponse, error) {
+// func (c APIClient) PaymentGetAllByRoomID(id int64) ([]types.Payment, error) {
 // 	var ps []types.Payment
 // 	r, err := c.resourceGet(fmt.Sprintf("%s/payment/room/id/%d", c.baseAPIURL, id), &ps)
 
-// 	switch {
-// 	case err != nil:
-// 		return nil, nil, err
-// 	case r != nil:
-// 		return nil, r, nil
-// 	default:
-// 		return ps, nil, nil
-// 	}
+// 	return ps, err
 // }
 
-// func (c APIClient) PaymentGetByID(id int64) (*types.Payment, *types.APIResponse, error) {
+// func (c APIClient) PaymentGetByID(id int64) (*types.Payment, error) {
 // 	var p types.Payment
 // 	r, err := c.resourceGet(fmt.Sprintf("%s/payment/id/%d", c.baseAPIURL, id), &p)
 
@@ -67,7 +46,7 @@ package api_client
 // 	}
 // }
 
-// func (c APIClient) PaymentGetByDate(date time.Time) ([]types.Payment, *types.APIResponse, error) {
+// func (c APIClient) PaymentGetByDate(date time.Time) ([]types.Payment, error) {
 // 	var ps []types.Payment
 // 	r, err := c.resourceGet(
 // 		fmt.Sprintf("%s/payment/date/%s",
@@ -87,7 +66,7 @@ package api_client
 // 	}
 // }
 
-// func (c APIClient) PaymentGetByDateRange(date_start time.Time, date_end time.Time) ([]types.Payment, *types.APIResponse, error) {
+// func (c APIClient) PaymentGetByDateRange(date_start time.Time, date_end time.Time) ([]types.Payment, error) {
 // 	var ps []types.Payment
 // 	r, err := c.resourcePost(
 // 		fmt.Sprintf("%s/payment/date/range", c.baseAPIURL),
@@ -108,7 +87,7 @@ package api_client
 // 	}
 // }
 
-// func (c APIClient) PaymentCreate(p *types.Payment) (*types.APIResponse, error) {
+// func (c APIClient) PaymentCreate(p *types.Payment) error {
 // 	if p == nil {
 // 		return nil, errors.New("*types.Payment is nil")
 // 	}
@@ -131,11 +110,11 @@ package api_client
 // 	return nil, nil
 // }
 
-// func (c APIClient) PaymentDelete(id int64) (*types.APIResponse, error) {
+// func (c APIClient) PaymentDelete(id int64) error {
 // 	return c.resourceDelete(fmt.Sprintf("%s/payment/id/%d", c.baseAPIURL, id))
 // }
 
-// func (c APIClient) PaymentPatch(p *types.Payment) (*types.APIResponse, error) {
+// func (c APIClient) PaymentPatch(p *types.Payment) error {
 // 	if p == nil {
 // 		return nil, errors.New("*types.Payment is nil")
 // 	}

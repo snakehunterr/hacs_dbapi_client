@@ -1,7 +1,6 @@
 package api_client
 
 import (
-	"os"
 	"strings"
 	"testing"
 
@@ -9,14 +8,9 @@ import (
 	api_errors "github.com/snakehunterr/hacs_dbapi_types/errors"
 )
 
-func newTestAPIClient() APIClient {
-	return New(os.Getenv("DBAPI_SERVER_HOST"), os.Getenv("DBAPI_SERVER_PORT"))
-}
-
 func Test_client_create_delete(t *testing.T) {
 	var (
-		client = newTestAPIClient()
-		c      = &types.Client{
+		c = &types.Client{
 			ID:   1,
 			Name: "foo",
 		}
@@ -50,8 +44,7 @@ func Test_client_create_delete(t *testing.T) {
 
 func Test_client_get_by_id(t *testing.T) {
 	var (
-		client = newTestAPIClient()
-		c      = &types.Client{
+		c = &types.Client{
 			ID:   1,
 			Name: "foo",
 		}
@@ -81,7 +74,6 @@ func Test_client_get_by_id(t *testing.T) {
 }
 
 func Test_client_get_all(t *testing.T) {
-	client := newTestAPIClient()
 	cs := []types.Client{
 		{ID: 1, Name: "foo"},
 		{ID: 2, Name: "foo"},
@@ -112,7 +104,6 @@ func Test_client_get_all(t *testing.T) {
 }
 
 func Test_client_get_admins(t *testing.T) {
-	client := newTestAPIClient()
 	cs := []types.Client{
 		{ID: 1, Name: "foo", IsAdmin: true},
 		{ID: 2, Name: "foo", IsAdmin: true},
@@ -147,7 +138,6 @@ func Test_client_get_admins(t *testing.T) {
 }
 
 func Test_client_get_by_name(t *testing.T) {
-	client := newTestAPIClient()
 	cs := []types.Client{
 		{ID: 1, Name: "ha"},
 		{ID: 2, Name: "foo"},
@@ -183,7 +173,6 @@ func Test_client_get_by_name(t *testing.T) {
 }
 
 func Test_client_patch(t *testing.T) {
-	client := newTestAPIClient()
 	c := &types.Client{
 		ID:      1,
 		Name:    "foo",

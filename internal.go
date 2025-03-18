@@ -31,6 +31,8 @@ type APIClient struct {
 	baseAPIURL string
 }
 
+func (c APIClient) Foo() {}
+
 func (c APIClient) newFormRequest(method string, apiurl string, form Form) (*http.Request, error) {
 	var vs = url.Values{}
 
