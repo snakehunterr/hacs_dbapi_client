@@ -81,6 +81,17 @@ func Test_client_get_all(t *testing.T) {
 		c3 = &types.Client{ID: 3, Name: "hahaha"}
 	)
 
+	_, res, err := client.ClientGetAll()
+	if err != nil {
+		t.Fatal("ClientGetAll() (no records):", err)
+	}
+	if res == nil {
+		t.Fatal("ClientGetAll() (no records) *types.APIResponse is nil")
+	}
+	if res.Error != nil && !(api_errors.IsChildErr(res.Error, api_errors.ErrSQLNoRows)) {
+		t.Fatal("ClientGetAll() (no records) wrong *APIError:", res.Error)
+	}
+
 	for _, c := range []*types.Client{c1, c2, c3} {
 		res, err := client.ClientCreate(c)
 		if err != nil {

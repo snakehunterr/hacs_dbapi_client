@@ -11,14 +11,7 @@ func (c APIClient) RoomGetAll() ([]types.Room, *types.APIResponse, error) {
 	var rs []types.Room
 
 	res, err := c.resourceGet(fmt.Sprintf("%s/room/all", c.baseAPIURL), &rs)
-	switch {
-	case err != nil:
-		return nil, nil, err
-	case res != nil:
-		return nil, res, nil
-	default:
-		return rs, nil, nil
-	}
+	return rs, res, err
 }
 
 func (c APIClient) RoomGetByID(id int64) (*types.Room, *types.APIResponse, error) {

@@ -157,6 +157,20 @@ func Test_room_get_all(t *testing.T) {
 		err error
 	)
 
+	_, res, err = client.RoomGetAll()
+	if err != nil {
+		t.Fatal("RoomGetAll() (no records): err")
+	}
+	if res == nil {
+		t.Fatal("RoomGetAll() (no records) *types.APIResponse is nil")
+	}
+	if res.Error == nil {
+		t.Fatal("RoomGetAll() (no records) *APIError is nil")
+	}
+	if !(api_errors.IsChildErr(res.Error, api_errors.ErrSQLNoRows)) {
+		t.Fatal("RoomGetAll() (no records) wrong *APIError:", res.Error)
+	}
+
 	if _, err := client.ClientCreate(c); err != nil {
 		t.Fatal("ClientCreate err:", err)
 	}
