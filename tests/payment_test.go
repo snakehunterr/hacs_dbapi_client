@@ -1,693 +1,455 @@
 package api_client
 
-// package api_client
+import (
+	"encoding/json"
+	"testing"
+	"time"
 
-// import (
-// 	"os"
-// 	"testing"
-// 	"time"
+	types "github.com/snakehunterr/hacs_dbapi_types"
+	api_errors "github.com/snakehunterr/hacs_dbapi_types/errors"
+)
 
-// 	types "github.com/snakehunterr/hacs_dbapi_types"
-// 	"github.com/snakehunterr/hacs_dbapi_types/validators"
-// )
+func Test_payment_create_delete(t *testing.T) {
+	var (
+		c   = newTestClient(1)
+		r   = newTestRoom(c.ID, 1)
+		p   = newTestPayment(c.ID, r.ID)
+		_p  *types.Payment
+		err error
+	)
 
-// func Test_payment_get_by_id(t *testing.T) {
-// 	var (
-// 		client = NewAPIClient(os.Getenv("HACS_DBAPI_HOST"), os.Getenv("HACS_DBAPI_PORT"))
-// 		c      = &types.Client{
-// 			ID:   1,
-// 			Name: "foo",
-// 		}
-// 		r = &types.Room{
-// 			ID:          1,
-// 			ClientID:    c.ID,
-// 			Area:        1,
-// 			PeopleCount: 1,
-// 		}
-// 		p = &types.Payment{
-// 			ClientID: c.ID,
-// 			RoomID:   r.ID,
-// 			Amount:   100.50,
-// 			Date:     time.Now(),
-// 		}
-// 		res *types.APIResponse
-// 		err error
-// 	)
+	_, err = client.PaymentCreate(p.ClientID, p.RoomID, p.Date, p.Amount)
+	if err == nil {
+		t.Fatal()
+	}
 
-// 	if _, err := client.ClientCreate(c); err != nil {
-// 		t.Fatal("ClientCreate:", err)
-// 	}
-// 	defer func() {
-// 		if _, err := client.ClientDelete(c.ID); err != nil {
-// 			t.Fatal("ClientDelete:", err)
-// 		}
-// 	}()
+	client.ClientCreate(c)
+	defer client.ClientDelete(c.ID)
+	client.RoomCreate(r)
+	defer client.RoomDelete(r.ID)
 
-// 	if _, err := client.RoomCreate(r); err != nil {
-// 		t.Fatal("RoomCreate:", err)
-// 	}
-// 	defer func() {
-// 		if _, err := client.RoomDelete(r.ID); err != nil {
-// 			t.Fatal("RoomDelete:", err)
-// 		}
-// 	}()
+	_p, err = client.PaymentCreate(p.ClientID, p.RoomID, p.Date, p.Amount)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _p.ClientID != p.ClientID ||
+		_p.RoomID != p.RoomID ||
+		!float_equal(_p.Amount, p.Amount) ||
+		!date_equal(_p.Date, p.Date) {
+		t.Fatal(_p, p)
+	}
+	err = client.PaymentDelete(_p.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
 
-// 	res, err = client.PaymentCreate(p)
-// 	if err != nil {
-// 		t.Fatal("PaymentCreate:", err)
-// 	}
-// 	if res != nil && res.Error != nil {
-// 		t.Fatal("PaymentCreate *APIError:", res.Error)
-// 	}
-// 	if p.ID == 0 {
-// 		t.Fatal("PaymentCreate new payment ID is 0")
-// 	}
-// 	defer func() {
-// 		res, err = client.PaymentDelete(p.ID)
-// 		if err != nil {
-// 			t.Fatal("PaymentDelete:", err)
-// 		}
-// 		if res == nil {
-// 			t.Fatal("PaymentDelete *types.APIResponse is nil")
-// 		}
-// 		if res.Error != nil {
-// 			t.Fatal("PaymentDelete *APIError:", res.Error)
-// 		}
-// 	}()
+func Test_payment_get_by_id(t *testing.T) {
+	var (
+		c   = newTestClient(1)
+		r   = newTestRoom(c.ID, 1)
+		p   = newTestPayment(c.ID, r.ID)
+		_p  *types.Payment
+		__p *types.Payment
+		err error
+	)
 
-// 	_p, res, err := client.PaymentGetByID(p.ID)
-// 	if err != nil {
-// 		t.Fatal("PaymentGetByID:", err)
-// 	}
-// 	if res != nil {
-// 		t.Fatal("PaymentGetByID *types.APIResponse:", err)
-// 	}
-// 	if _p == nil {
-// 		t.Fatal("PaymentGetByID *types.Payment is nil")
-// 	}
-// 	if _p.ID != p.ID {
-// 		t.Fatalf("PaymentGetByID wrong payment_id: %v != %v", _p.ID, p.ID)
-// 	}
-// 	if _p.ClientID != p.ClientID {
-// 		t.Fatalf("PaymentGetByID wrong client_id: %v != %v", _p.ClientID, p.ClientID)
-// 	}
-// 	if _p.RoomID != p.RoomID {
-// 		t.Fatalf("PaymentGetByID wrong room_id: %v != %v", _p.RoomID, p.RoomID)
-// 	}
-// 	if _p.Date.Format(validators.DATE_FORMAT) != p.Date.Format(validators.DATE_FORMAT) {
-// 		t.Fatalf("PaymentGetByID wrong payment_date: %v != %v", _p.Date, p.Date)
-// 	}
-// 	if _p.Amount != p.Amount {
-// 		t.Fatalf("PaymentGetByID wrong payment_amount: %v != %v", _p.Amount, p.Amount)
-// 	}
-// }
+	_p, err = client.PaymentGetByID(1123456)
+	if err == nil {
+		t.Fatal(_p)
+	}
 
-// func Test_payment_get_all(t *testing.T) {
-// 	var (
-// 		client = NewAPIClient(os.Getenv("HACS_DBAPI_HOST"), os.Getenv("HACS_DBAPI_PORT"))
-// 		c      = &types.Client{
-// 			ID:   1,
-// 			Name: "foo",
-// 		}
-// 		r = &types.Room{
-// 			ID:          1,
-// 			ClientID:    c.ID,
-// 			Area:        1,
-// 			PeopleCount: 1,
-// 		}
-// 	)
+	client.ClientCreate(c)
+	defer client.ClientDelete(c.ID)
+	client.RoomCreate(r)
+	defer client.RoomDelete(r.ID)
 
-// 	if _, err := client.ClientCreate(c); err != nil {
-// 		t.Fatal("ClientCreate:", err)
-// 	}
-// 	defer func() {
-// 		if _, err := client.ClientDelete(c.ID); err != nil {
-// 			t.Fatal("ClientDelete:", err)
-// 		}
-// 	}()
+	_p, _ = client.PaymentCreate(p.ClientID, p.RoomID, p.Date, p.Amount)
+	defer client.PaymentDelete(_p.ID)
 
-// 	if _, err := client.RoomCreate(r); err != nil {
-// 		t.Fatal("RoomCreate:", err)
-// 	}
-// 	defer func() {
-// 		if _, err := client.RoomDelete(r.ID); err != nil {
-// 			t.Fatal("RoomDelete:", err)
-// 		}
-// 	}()
+	__p, err = client.PaymentGetByID(_p.ID)
+	if _p.ClientID != __p.ClientID ||
+		_p.RoomID != __p.RoomID ||
+		!date_equal(_p.Date, __p.Date) ||
+		!float_equal(_p.Amount, __p.Amount) {
+		t.Fatal(__p, _p)
+	}
+}
 
-// 	ps := []*types.Payment{
-// 		{ClientID: c.ID, RoomID: r.ID, Date: time.Now(), Amount: 1},
-// 		{ClientID: c.ID, RoomID: r.ID, Date: time.Now(), Amount: 2},
-// 		{ClientID: c.ID, RoomID: r.ID, Date: time.Now(), Amount: 3},
-// 		{ClientID: c.ID, RoomID: r.ID, Date: time.Now(), Amount: 4},
-// 	}
+func Test_payment_get_all(t *testing.T) {
+	var (
+		c1 = newTestClient(1)
+		c2 = newTestClient(2)
+		r1 = newTestRoom(c1.ID, 1)
+		r2 = newTestRoom(c1.ID, 2)
+		ps = []*types.Payment{
+			newTestPayment(c1.ID, r1.ID),
+			newTestPayment(c2.ID, r2.ID),
+			newTestPayment(c1.ID, r2.ID),
+			newTestPayment(c2.ID, r1.ID),
+			newTestPayment(c1.ID, r2.ID),
+			newTestPayment(c1.ID, r1.ID),
+			newTestPayment(c2.ID, r2.ID),
+			newTestPayment(c1.ID, r2.ID),
+			newTestPayment(c2.ID, r1.ID),
+			newTestPayment(c1.ID, r2.ID),
+		}
+		_ps []types.Payment
+		err error
+	)
 
-// 	for _, p := range ps {
-// 		if _, err := client.PaymentCreate(p); err != nil {
-// 			t.Fatal("PaymentCreate:", err)
-// 		}
-// 	}
+	_ps, err = client.PaymentGetAll()
+	if err == nil {
+		t.Fatal(_ps)
+	}
 
-// 	_ps, res, err := client.PaymentGetAll()
-// 	if err != nil {
-// 		t.Fatal("PaymentGetAll:", err)
-// 	}
-// 	if res != nil {
-// 		t.Fatal("PaymentGetAll *types.APIResponse:", res)
-// 	}
-// 	if len(_ps) != len(ps) {
-// 		t.Fatal("PaymentGetAll returned:", _ps)
-// 	}
+	client.ClientCreate(c1)
+	defer client.ClientDelete(c1.ID)
+	client.ClientCreate(c2)
+	defer client.ClientDelete(c2.ID)
+	client.RoomCreate(r1)
+	defer client.RoomDelete(r1.ID)
+	client.RoomCreate(r2)
+	defer client.RoomDelete(r2.ID)
 
-// 	for _, p := range ps {
-// 		if res, err := client.PaymentDelete(p.ID); err != nil {
-// 			t.Fatal("PaymentDelete:", err)
-// 		} else if res.Error != nil {
-// 			t.Fatal("PaymentDelete *APIError:", res.Error)
-// 		}
-// 	}
-// }
+	for _, p := range ps {
+		_p, _ := client.PaymentCreate(p.ClientID, p.RoomID, p.Date, p.Amount)
+		defer client.PaymentDelete(_p.ID)
+	}
 
-// func Test_payment_get_by_client_id(t *testing.T) {
-// 	var (
-// 		client = NewAPIClient(os.Getenv("HACS_DBAPI_HOST"), os.Getenv("HACS_DBAPI_PORT"))
-// 		c1     = &types.Client{
-// 			ID:   1,
-// 			Name: "foo",
-// 		}
-// 		c2 = &types.Client{
-// 			ID:   2,
-// 			Name: "foo",
-// 		}
-// 		r = &types.Room{
-// 			ID:          1,
-// 			ClientID:    c1.ID,
-// 			Area:        1,
-// 			PeopleCount: 1,
-// 		}
-// 	)
+	_ps, err = client.PaymentGetAll()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(_ps) != len(ps) {
+		t.Fatal()
+	}
+}
 
-// 	if _, err := client.ClientCreate(c1); err != nil {
-// 		t.Fatal("ClientCreate:", err)
-// 	}
-// 	defer func() {
-// 		if _, err := client.ClientDelete(c1.ID); err != nil {
-// 			t.Fatal("ClientDelete:", err)
-// 		}
-// 	}()
+func Test_payment_get_by_client_id(t *testing.T) {
+	var (
+		c1 = newTestClient(1)
+		c2 = newTestClient(2)
+		r  = newTestRoom(c1.ID, 1)
+		ps = []*types.Payment{
+			newTestPayment(c1.ID, r.ID),
+			newTestPayment(c2.ID, r.ID),
+			newTestPayment(c1.ID, r.ID),
+			newTestPayment(c2.ID, r.ID),
+			newTestPayment(c1.ID, r.ID),
+		}
+		_ps []types.Payment
+		err error
+	)
 
-// 	if _, err := client.ClientCreate(c2); err != nil {
-// 		t.Fatal("ClientCreate:", err)
-// 	}
-// 	defer func() {
-// 		if _, err := client.ClientDelete(c2.ID); err != nil {
-// 			t.Fatal("ClientDelete:", err)
-// 		}
-// 	}()
+	_ps, err = client.PaymentGetAllByClientID(c1.ID)
+	if err == nil {
+		t.Fatal(_ps)
+	}
+	_ps, err = client.PaymentGetAllByClientID(c2.ID)
+	if err == nil {
+		t.Fatal(_ps)
+	}
 
-// 	if _, err := client.RoomCreate(r); err != nil {
-// 		t.Fatal("RoomCreate:", err)
-// 	}
-// 	defer func() {
-// 		if _, err := client.RoomDelete(r.ID); err != nil {
-// 			t.Fatal("RoomDelete:", err)
-// 		}
-// 	}()
+	client.ClientCreate(c1)
+	defer client.ClientDelete(c1.ID)
+	client.ClientCreate(c2)
+	defer client.ClientDelete(c2.ID)
+	client.RoomCreate(r)
+	defer client.RoomDelete(r.ID)
 
-// 	var ps = []*types.Payment{
-// 		{ClientID: c1.ID, RoomID: r.ID, Date: time.Now(), Amount: 1},
-// 		{ClientID: c2.ID, RoomID: r.ID, Date: time.Now(), Amount: 1},
-// 		{ClientID: c1.ID, RoomID: r.ID, Date: time.Now(), Amount: 1},
-// 		{ClientID: c2.ID, RoomID: r.ID, Date: time.Now(), Amount: 1},
-// 		{ClientID: c1.ID, RoomID: r.ID, Date: time.Now(), Amount: 1},
-// 	}
+	c1_count := 0
+	c2_count := 0
+	for _, p := range ps {
+		switch p.ClientID {
+		case c1.ID:
+			c1_count++
+		case c2.ID:
+			c2_count++
+		}
 
-// 	for _, p := range ps {
-// 		if _, err := client.PaymentCreate(p); err != nil {
-// 			t.Fatal("PaymentCreate:", err)
-// 		}
-// 	}
+		_p, _ := client.PaymentCreate(p.ClientID, p.RoomID, p.Date, p.Amount)
+		defer client.PaymentDelete(_p.ID)
+	}
 
-// 	temp := []*types.Payment{}
-// 	for _, p := range ps {
-// 		if p.ClientID == c1.ID {
-// 			temp = append(temp, p)
-// 		}
-// 	}
-// 	_ps, res, err := client.PaymentGetAllByClientID(c1.ID)
-// 	if err != nil {
-// 		t.Fatal("PaymentGetAllByClientID:", err)
-// 	}
-// 	if res != nil {
-// 		t.Fatal("PaymentGetAllByClientID *types.APIResponse:", res)
-// 	}
-// 	if len(_ps) != len(temp) {
-// 		t.Fatal("PaymentGetAllByClientID returns:", _ps)
-// 	}
+	_ps, err = client.PaymentGetAllByClientID(c1.ID)
+	if err != nil {
+		t.Fatal()
+	}
+	if len(_ps) != c1_count {
+		t.Fatal(_ps)
+	}
 
-// 	temp = []*types.Payment{}
-// 	for _, p := range ps {
-// 		if p.ClientID == c2.ID {
-// 			temp = append(temp, p)
-// 		}
-// 	}
-// 	_ps, res, err = client.PaymentGetAllByClientID(c2.ID)
-// 	if err != nil {
-// 		t.Fatal("PaymentGetAllByClientID:", err)
-// 	}
-// 	if res != nil {
-// 		t.Fatal("PaymentGetAllByClientID *types.APIResponse:", res)
-// 	}
-// 	if len(_ps) != len(temp) {
-// 		t.Fatal("PaymentGetAllByClientID returns:", _ps)
-// 	}
+	_ps, err = client.PaymentGetAllByClientID(c2.ID)
+	if err != nil {
+		t.Fatal()
+	}
+	if len(_ps) != c2_count {
+		t.Fatal(_ps)
+	}
+}
 
-// 	for _, p := range ps {
-// 		if res, err := client.PaymentDelete(p.ID); err != nil {
-// 			t.Fatal("PaymentDelete:", err)
-// 		} else if res.Error != nil {
-// 			t.Fatal("PaymentDelete *APIError:", res.Error)
-// 		}
-// 	}
-// }
+func Test_payment_get_by_room_id(t *testing.T) {
+	var (
+		c  = newTestClient(1)
+		r1 = newTestRoom(c.ID, 1)
+		r2 = newTestRoom(c.ID, 2)
+		ps = []*types.Payment{
+			newTestPayment(c.ID, r1.ID),
+			newTestPayment(c.ID, r2.ID),
+			newTestPayment(c.ID, r1.ID),
+			newTestPayment(c.ID, r2.ID),
+			newTestPayment(c.ID, r1.ID),
+		}
+		_ps []types.Payment
+		err error
+	)
 
-// func Test_payment_get_by_room_id(t *testing.T) {
-// 	var (
-// 		client = NewAPIClient(os.Getenv("HACS_DBAPI_HOST"), os.Getenv("HACS_DBAPI_PORT"))
-// 		c      = &types.Client{
-// 			ID:   1,
-// 			Name: "foo",
-// 		}
-// 		r1 = &types.Room{
-// 			ID:          1,
-// 			ClientID:    c.ID,
-// 			Area:        1,
-// 			PeopleCount: 1,
-// 		}
-// 		r2 = &types.Room{
-// 			ID:          2,
-// 			ClientID:    c.ID,
-// 			Area:        1,
-// 			PeopleCount: 1,
-// 		}
-// 	)
+	_ps, err = client.PaymentGetAllByRoomID(r1.ID)
+	if err == nil {
+		t.Fatal(_ps)
+	}
+	_ps, err = client.PaymentGetAllByRoomID(r2.ID)
+	if err == nil {
+		t.Fatal(_ps)
+	}
 
-// 	if _, err := client.ClientCreate(c); err != nil {
-// 		t.Fatal("ClientCreate:", err)
-// 	}
-// 	defer func() {
-// 		if _, err := client.ClientDelete(c.ID); err != nil {
-// 			t.Fatal("ClientDelete:", err)
-// 		}
-// 	}()
+	client.ClientCreate(c)
+	defer client.ClientDelete(c.ID)
+	client.RoomCreate(r1)
+	defer client.RoomDelete(r1.ID)
+	client.RoomCreate(r2)
+	defer client.RoomDelete(r2.ID)
 
-// 	if _, err := client.RoomCreate(r1); err != nil {
-// 		t.Fatal("RoomCreate:", err)
-// 	}
-// 	defer func() {
-// 		if _, err := client.RoomDelete(r1.ID); err != nil {
-// 			t.Fatal("RoomDelete:", err)
-// 		}
-// 	}()
+	r1_count := 0
+	r2_count := 0
+	for _, p := range ps {
+		switch p.RoomID {
+		case r1.ID:
+			r1_count++
+		case r2.ID:
+			r2_count++
+		}
 
-// 	if _, err := client.RoomCreate(r2); err != nil {
-// 		t.Fatal("RoomCreate:", err)
-// 	}
-// 	defer func() {
-// 		if _, err := client.RoomDelete(r2.ID); err != nil {
-// 			t.Fatal("RoomDelete:", err)
-// 		}
-// 	}()
+		_p, _ := client.PaymentCreate(p.ClientID, p.RoomID, p.Date, p.Amount)
+		defer client.PaymentDelete(_p.ID)
+	}
 
-// 	var ps = []*types.Payment{
-// 		{ClientID: c.ID, RoomID: r1.ID, Date: time.Now(), Amount: 1},
-// 		{ClientID: c.ID, RoomID: r2.ID, Date: time.Now(), Amount: 1},
-// 		{ClientID: c.ID, RoomID: r1.ID, Date: time.Now(), Amount: 1},
-// 		{ClientID: c.ID, RoomID: r2.ID, Date: time.Now(), Amount: 1},
-// 		{ClientID: c.ID, RoomID: r1.ID, Date: time.Now(), Amount: 1},
-// 	}
+	_ps, err = client.PaymentGetAllByRoomID(r1.ID)
+	if err != nil {
+		t.Fatal()
+	}
+	if len(_ps) != r1_count {
+		t.Fatal(_ps)
+	}
 
-// 	for _, p := range ps {
-// 		if _, err := client.PaymentCreate(p); err != nil {
-// 			t.Fatal("PaymentCreate:", err)
-// 		}
-// 	}
+	_ps, err = client.PaymentGetAllByRoomID(r2.ID)
+	if err != nil {
+		t.Fatal()
+	}
+	if len(_ps) != r2_count {
+		t.Fatal(_ps)
+	}
+}
 
-// 	temp := []*types.Payment{}
-// 	for _, p := range ps {
-// 		if p.RoomID == r1.ID {
-// 			temp = append(temp, p)
-// 		}
-// 	}
-// 	_ps, res, err := client.PaymentGetAllByRoomID(r1.ID)
-// 	if err != nil {
-// 		t.Fatal("PaymentGetAllByRoomID:", err)
-// 	}
-// 	if res != nil {
-// 		t.Fatal("PaymentGetAllByRoomID *types.APIResponse:", res)
-// 	}
-// 	if len(_ps) != len(temp) {
-// 		t.Fatal("PaymentGetAllByRoomID returns:", _ps)
-// 	}
+func Test_payment_get_by_date(t *testing.T) {
+	var (
+		c  = newTestClient(1)
+		r  = newTestRoom(c.ID, 1)
+		d1 = newTestDate("2000-01-10")
+		d2 = newTestDate("2004-05-05")
+		ps = []*types.Payment{
+			{ClientID: c.ID, RoomID: r.ID, Date: d1, Amount: 1},
+			{ClientID: c.ID, RoomID: r.ID, Date: d2, Amount: 1},
+			{ClientID: c.ID, RoomID: r.ID, Date: d1, Amount: 1},
+			{ClientID: c.ID, RoomID: r.ID, Date: d2, Amount: 1},
+			{ClientID: c.ID, RoomID: r.ID, Date: d1, Amount: 1},
+		}
+		_ps []types.Payment
+		err error
+	)
 
-// 	temp = []*types.Payment{}
-// 	for _, p := range ps {
-// 		if p.RoomID == r2.ID {
-// 			temp = append(temp, p)
-// 		}
-// 	}
-// 	_ps, res, err = client.PaymentGetAllByRoomID(r2.ID)
-// 	if err != nil {
-// 		t.Fatal("PaymentGetAllByRoomID:", err)
-// 	}
-// 	if res != nil {
-// 		t.Fatal("PaymentGetAllByRoomID *types.APIResponse:", res)
-// 	}
-// 	if len(_ps) != len(temp) {
-// 		t.Fatal("PaymentGetAllByRoomID returns:", _ps)
-// 	}
+	_ps, err = client.PaymentGetByDate(d1)
+	if err == nil {
+		t.Fatal(_ps)
+	}
+	_ps, err = client.PaymentGetByDate(d2)
+	if err == nil {
+		t.Fatal(_ps)
+	}
 
-// 	for _, p := range ps {
-// 		if res, err := client.PaymentDelete(p.ID); err != nil {
-// 			t.Fatal("PaymentDelete:", err)
-// 		} else if res.Error != nil {
-// 			t.Fatal("PaymentDelete *APIError:", res.Error)
-// 		}
-// 	}
-// }
+	client.ClientCreate(c)
+	defer client.ClientDelete(c.ID)
+	client.RoomCreate(r)
+	defer client.RoomDelete(r.ID)
 
-// func Test_payment_get_by_date(t *testing.T) {
-// 	var (
-// 		client = NewAPIClient(os.Getenv("HACS_DBAPI_HOST"), os.Getenv("HACS_DBAPI_PORT"))
-// 		c      = &types.Client{
-// 			ID:   1,
-// 			Name: "foo",
-// 		}
-// 		r = &types.Room{
-// 			ID:          1,
-// 			ClientID:    c.ID,
-// 			Area:        1,
-// 			PeopleCount: 1,
-// 		}
-// 	)
+	d1_count := 0
+	d2_count := 0
+	for _, p := range ps {
+		switch {
+		case date_equal(d1, p.Date):
+			d1_count++
+		case date_equal(d2, p.Date):
+			d2_count++
+		}
 
-// 	if _, err := client.ClientCreate(c); err != nil {
-// 		t.Fatal("ClientCreate:", err)
-// 	}
-// 	defer func() {
-// 		if _, err := client.ClientDelete(c.ID); err != nil {
-// 			t.Fatal("ClientDelete:", err)
-// 		}
-// 	}()
+		_p, _ := client.PaymentCreate(p.ClientID, p.RoomID, p.Date, p.Amount)
+		defer client.PaymentDelete(_p.ID)
+	}
 
-// 	if _, err := client.RoomCreate(r); err != nil {
-// 		t.Fatal("RoomCreate:", err)
-// 	}
-// 	defer func() {
-// 		if _, err := client.RoomDelete(r.ID); err != nil {
-// 			t.Fatal("RoomDelete:", err)
-// 		}
-// 	}()
+	_ps, err = client.PaymentGetByDate(d1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(_ps) != d1_count {
+		t.Fatal(_ps)
+	}
 
-// 	t1, _ := time.Parse("2006-01-02", "2024-01-10")
-// 	t2, _ := time.Parse("2006-01-02", "2024-01-11")
+	_ps, err = client.PaymentGetByDate(d2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(_ps) != d2_count {
+		t.Fatal(_ps)
+	}
+}
 
-// 	ps := []*types.Payment{
-// 		{ClientID: c.ID, RoomID: r.ID, Date: t1, Amount: 1},
-// 		{ClientID: c.ID, RoomID: r.ID, Date: t2, Amount: 1},
-// 		{ClientID: c.ID, RoomID: r.ID, Date: t1, Amount: 1},
-// 	}
+func Test_payment_get_by_date_range(t *testing.T) {
+	var (
+		c  = newTestClient(1)
+		r  = newTestRoom(c.ID, 1)
+		d1 = newTestDate("2000-01-10")
+		d2 = newTestDate("2000-01-20")
+		d3 = newTestDate("2000-01-30")
+		d4 = newTestDate("2000-02-10")
+		ps = []types.Payment{
+			{ClientID: c.ID, RoomID: r.ID, Date: d3, Amount: 1},
+			{ClientID: c.ID, RoomID: r.ID, Date: d1, Amount: 1},
+			{ClientID: c.ID, RoomID: r.ID, Date: d2, Amount: 1},
+			{ClientID: c.ID, RoomID: r.ID, Date: d1, Amount: 1},
+			{ClientID: c.ID, RoomID: r.ID, Date: d1, Amount: 1},
+			{ClientID: c.ID, RoomID: r.ID, Date: d3, Amount: 1},
+			{ClientID: c.ID, RoomID: r.ID, Date: d2, Amount: 1},
+			{ClientID: c.ID, RoomID: r.ID, Date: d1, Amount: 1},
+			{ClientID: c.ID, RoomID: r.ID, Date: d2, Amount: 1},
+			{ClientID: c.ID, RoomID: r.ID, Date: d2, Amount: 1},
+			{ClientID: c.ID, RoomID: r.ID, Date: d2, Amount: 1},
+			{ClientID: c.ID, RoomID: r.ID, Date: d3, Amount: 1},
+			{ClientID: c.ID, RoomID: r.ID, Date: d3, Amount: 1},
+			{ClientID: c.ID, RoomID: r.ID, Date: d2, Amount: 1},
+			{ClientID: c.ID, RoomID: r.ID, Date: d1, Amount: 1},
+		}
+		_ps []types.Payment
+		err error
+	)
 
-// 	for _, p := range ps {
-// 		if _, err := client.PaymentCreate(p); err != nil {
-// 			t.Fatal("PaymentCreate:", err)
-// 		}
-// 	}
+	_ps, err = client.PaymentGetByDateRange(d1, d4)
+	if err == nil {
+		t.Fatal(_ps)
+	}
 
-// 	_ps, res, err := client.PaymentGetByDate(t1)
-// 	if err != nil {
-// 		t.Fatal("PaymentGetByDate:", err)
-// 	}
-// 	if res != nil {
-// 		t.Fatal("PaymentGetByDate *types.APIResponse:", res)
-// 	}
-// 	if len(_ps) != 2 {
-// 		t.Fatal("PaymentGetByDate returns:", _ps)
-// 	}
+	client.ClientCreate(c)
+	defer client.ClientDelete(c.ID)
+	client.RoomCreate(r)
+	defer client.RoomDelete(r.ID)
 
-// 	_ps, res, err = client.PaymentGetByDate(t2)
-// 	if err != nil {
-// 		t.Fatal("PaymentGetByDate:", err)
-// 	}
-// 	if res != nil {
-// 		t.Fatal("PaymentGetByDate *types.APIResponse:", res)
-// 	}
-// 	if len(_ps) != 1 {
-// 		t.Fatal("PaymentGetByDate returns:", _ps)
-// 	}
+	for _, p := range ps {
+		_p, _ := client.PaymentCreate(p.ClientID, p.RoomID, p.Date, p.Amount)
+		defer client.PaymentDelete(_p.ID)
+	}
 
-// 	for _, p := range ps {
-// 		res, err := client.PaymentDelete(p.ID)
-// 		if err != nil {
-// 			t.Fatal("PaymentDelete:", err)
-// 		}
-// 		if res.Error != nil {
-// 			t.Fatal("PaymentDelete *APIError:", res.Error)
-// 		}
-// 	}
-// }
+	check := func(d1, d2 time.Time) {
+		count := 0
+		for _, p := range ps {
+			if (p.Date.After(d1) || date_equal(d1, p.Date)) &&
+				(d2.After(p.Date) || date_equal(d2, p.Date)) {
+				count++
+			}
+		}
 
-// func Test_payment_get_by_date_range(t *testing.T) {
-// 	var (
-// 		client = NewAPIClient(os.Getenv("HACS_DBAPI_HOST"), os.Getenv("HACS_DBAPI_PORT"))
-// 		c      = &types.Client{
-// 			ID:   1,
-// 			Name: "foo",
-// 		}
-// 		r = &types.Room{
-// 			ID:          1,
-// 			ClientID:    c.ID,
-// 			Area:        1,
-// 			PeopleCount: 1,
-// 		}
-// 	)
+		_ps, err = client.PaymentGetByDateRange(d1, d2)
+		if err != nil {
+			if api_errors.IsChildErr(err, api_errors.ErrSQLNoRows) && count == 0 && len(_ps) == 0 {
+				return
+			}
+			t.Fatal(err)
+		}
+		if len(_ps) != count {
+			bs, _ := json.MarshalIndent(_ps, "", "\t")
+			t.Fatalf("d1(%v); d2(%v)\n_ps len (%d) != count (%d):\n%s", d1, d2, len(_ps), count, bs)
+		}
+	}
 
-// 	if _, err := client.ClientCreate(c); err != nil {
-// 		t.Fatal("ClientCreate:", err)
-// 	}
-// 	defer func() {
-// 		if _, err := client.ClientDelete(c.ID); err != nil {
-// 			t.Fatal("ClientDelete:", err)
-// 		}
-// 	}()
+	check(d1, d2)
+	check(d1, d3)
+	check(d1, d4)
+	check(d1, d1)
+	check(d2, d2)
+	check(d3, d3)
+	check(d3, d2)
+}
 
-// 	if _, err := client.RoomCreate(r); err != nil {
-// 		t.Fatal("RoomCreate:", err)
-// 	}
-// 	defer func() {
-// 		if _, err := client.RoomDelete(r.ID); err != nil {
-// 			t.Fatal("RoomDelete:", err)
-// 		}
-// 	}()
+func Test_payment_patch(t *testing.T) {
+	var (
+		c   = newTestClient(1)
+		r   = newTestRoom(c.ID, 1)
+		p   = newTestPayment(c.ID, r.ID)
+		err error
+	)
 
-// 	t1, _ := time.Parse("2006-01-02", "2024-01-10")
-// 	t2, _ := time.Parse("2006-01-02", "2024-01-20")
-// 	t3, _ := time.Parse("2006-01-02", "2024-01-30")
-// 	t4, _ := time.Parse("2006-01-02", "2024-02-20")
+	p.ID = 12345667
+	err = client.PaymentPatch(p)
+	if err == nil {
+		t.Fatal()
+	}
 
-// 	ps := []*types.Payment{
-// 		{ClientID: c.ID, RoomID: r.ID, Date: t1, Amount: 1},
-// 		{ClientID: c.ID, RoomID: r.ID, Date: t2, Amount: 1},
-// 		{ClientID: c.ID, RoomID: r.ID, Date: t3, Amount: 1},
-// 	}
+	client.ClientCreate(c)
+	defer client.ClientDelete(c.ID)
+	client.RoomCreate(r)
+	defer client.RoomDelete(r.ID)
 
-// 	for _, p := range ps {
-// 		if _, err := client.PaymentCreate(p); err != nil {
-// 			t.Fatal("PaymentCreate:", err)
-// 		}
-// 	}
+	_p, _ := client.PaymentCreate(p.ClientID, p.RoomID, p.Date, p.Amount)
+	p.ID = _p.ID
+	defer client.PaymentDelete(p.ID)
 
-// 	_ps, res, err := client.PaymentGetByDateRange(t1, t1)
-// 	if err != nil {
-// 		t.Fatal("PaymentGetByDateRange:", err)
-// 	}
-// 	if res != nil {
-// 		t.Fatal("PaymentGetByDateRange *types.APIResponse:", res)
-// 	}
-// 	if len(_ps) != 1 {
-// 		t.Fatal("PaymentGetByDateRange returns:", _ps)
-// 	}
+	p.ClientID = 12345
+	err = client.PaymentPatch(p)
+	if err == nil {
+		t.Fatal()
+	}
+	p.ClientID = _p.ClientID
 
-// 	_ps, res, err = client.PaymentGetByDateRange(t1, t2)
-// 	if err != nil {
-// 		t.Fatal("PaymentGetByDateRange:", err)
-// 	}
-// 	if res != nil {
-// 		t.Fatal("PaymentGetByDateRange *types.APIResponse:", res)
-// 	}
-// 	if len(_ps) != 2 {
-// 		t.Fatal("PaymentGetByDateRange returns:", _ps)
-// 	}
+	p.RoomID = 12345
+	err = client.PaymentPatch(p)
+	if err == nil {
+		t.Fatal()
+	}
+	p.RoomID = _p.RoomID
 
-// 	_ps, res, err = client.PaymentGetByDateRange(t1, t3)
-// 	if err != nil {
-// 		t.Fatal("PaymentGetByDateRange:", err)
-// 	}
-// 	if res != nil {
-// 		t.Fatal("PaymentGetByDateRange *types.APIResponse:", res)
-// 	}
-// 	if len(_ps) != 3 {
-// 		t.Fatal("PaymentGetByDateRange returns:", _ps)
-// 	}
+	check := func() {
+		err = client.PaymentPatch(p)
+		if err != nil {
+			t.Fatal(err)
+		}
+		_p, _ = client.PaymentGetByID(p.ID)
 
-// 	_ps, res, err = client.PaymentGetByDateRange(t1, t4)
-// 	if err != nil {
-// 		t.Fatal("PaymentGetByDateRange:", err)
-// 	}
-// 	if res != nil {
-// 		t.Fatal("PaymentGetByDateRange *types.APIResponse:", res)
-// 	}
-// 	if len(_ps) != 3 {
-// 		t.Fatal("PaymentGetByDateRange returns:", _ps)
-// 	}
+		if _p.ClientID != p.ClientID ||
+			_p.RoomID != p.RoomID ||
+			!float_equal(_p.Amount, p.Amount) ||
+			!date_equal(_p.Date, p.Date) {
+			pjson, _ := json.MarshalIndent(p, "", "\t")
+			_pjson, _ := json.MarshalIndent(_p, "", "\t")
+			t.Fatalf("p:\n%s\n_p:\n%s", pjson, _pjson)
+		}
+	}
 
-// 	for _, p := range ps {
-// 		res, err := client.PaymentDelete(p.ID)
-// 		if err != nil {
-// 			t.Fatal("PaymentDelete:", err)
-// 		}
-// 		if res.Error != nil {
-// 			t.Fatal("PaymentDelete *APIError:", res.Error)
-// 		}
-// 	}
-// }
+	p.Amount = 1234.1234
+	check()
 
-// func Test_payment_patch(t *testing.T) {
-// 	var (
-// 		client = NewAPIClient(os.Getenv("HACS_DBAPI_HOST"), os.Getenv("HACS_DBAPI_PORT"))
-// 		c1     = &types.Client{
-// 			ID:   1,
-// 			Name: "foo",
-// 		}
-// 		c2 = &types.Client{
-// 			ID:   2,
-// 			Name: "foo",
-// 		}
-// 		r1 = &types.Room{
-// 			ID:          1,
-// 			ClientID:    c1.ID,
-// 			Area:        1,
-// 			PeopleCount: 1,
-// 		}
-// 		r2 = &types.Room{
-// 			ID:          2,
-// 			ClientID:    c2.ID,
-// 			Area:        1,
-// 			PeopleCount: 1,
-// 		}
-// 	)
+	p.Date = time.Now().Add(time.Hour*12345 + time.Second*12345)
+	check()
 
-// 	if _, err := client.ClientCreate(c1); err != nil {
-// 		t.Fatal("ClientCreate:", err)
-// 	}
-// 	defer func() {
-// 		if _, err := client.ClientDelete(c1.ID); err != nil {
-// 			t.Fatal("ClientDelete:", err)
-// 		}
-// 	}()
-// 	if _, err := client.ClientCreate(c2); err != nil {
-// 		t.Fatal("ClientCreate:", err)
-// 	}
-// 	defer func() {
-// 		if _, err := client.ClientDelete(c2.ID); err != nil {
-// 			t.Fatal("ClientDelete:", err)
-// 		}
-// 	}()
-
-// 	if _, err := client.RoomCreate(r1); err != nil {
-// 		t.Fatal("RoomCreate:", err)
-// 	}
-// 	defer func() {
-// 		if _, err := client.RoomDelete(r1.ID); err != nil {
-// 			t.Fatal("RoomDelete:", err)
-// 		}
-// 	}()
-// 	if _, err := client.RoomCreate(r2); err != nil {
-// 		t.Fatal("RoomCreate:", err)
-// 	}
-// 	defer func() {
-// 		if _, err := client.RoomDelete(r2.ID); err != nil {
-// 			t.Fatal("RoomDelete:", err)
-// 		}
-// 	}()
-
-// 	p := &types.Payment{
-// 		ClientID: c1.ID,
-// 		RoomID:   r1.ID,
-// 		Date:     time.Now(),
-// 		Amount:   10.50,
-// 	}
-// 	res, err := client.PaymentCreate(p)
-// 	if err != nil {
-// 		t.Fatal("PaymentCreate:", err)
-// 	}
-// 	if res != nil && res.Error != nil {
-// 		t.Fatal("PaymentCreate *APIError:", res.Error)
-// 	}
-// 	defer func() {
-// 		res, err := client.PaymentDelete(p.ID)
-// 		if err != nil {
-// 			t.Fatal("PaymentDelete:", err)
-// 		}
-// 		if res.Error != nil {
-// 			t.Fatal("PaymentDelete *APIError:", res.Error)
-// 		}
-// 	}()
-
-// 	check := func() {
-// 		res, err := client.PaymentPatch(p)
-// 		if err != nil {
-// 			t.Fatal("PaymentPatch:", err)
-// 		}
-// 		if res == nil {
-// 			t.Fatal("PaymentPatch *types.APIResponse is nil")
-// 		}
-// 		if res.Error != nil {
-// 			t.Fatal("PaymentPatch *APIError:", res.Error)
-// 		}
-
-// 		_p, res, err := client.PaymentGetByID(p.ID)
-// 		if err != nil {
-// 			t.Fatal("PaymentGetByID:", err)
-// 		}
-// 		if res != nil {
-// 			t.Fatal("PaymentGetByID *types.APIResponse:", res)
-// 		}
-// 		if _p == nil {
-// 			t.Fatal("PaymentGetByID *types.Payment is nil")
-// 		}
-// 		if _p.ClientID != p.ClientID {
-// 			t.Fatal("PaymentGetByID returns incorrect ClientID")
-// 		}
-// 		if _p.RoomID != p.RoomID {
-// 			t.Fatal("PaymentGetByID returns incorrect RoomID")
-// 		}
-// 		if p.Date.Format(validators.DATE_FORMAT) != _p.Date.Format(validators.DATE_FORMAT) {
-// 			t.Fatalf("PaymentGetByID returns incorrect Date (%v != %v)", _p.Date, p.Date)
-// 		}
-// 		if _p.Amount != p.Amount {
-// 			t.Fatal("PaymentGetByID returns incorrect Amount")
-// 		}
-// 	}
-
-// 	p.ClientID = c2.ID
-// 	check()
-
-// 	p.ClientID = c1.ID
-// 	p.RoomID = r2.ID
-// 	p.Amount = 3.88
-// 	check()
-
-// 	p.Date = time.Now().Add(time.Hour*24*31*23 + time.Minute*12345 + time.Second*12345)
-// 	check()
-// }
+	p.Amount = 0.9999
+	p.Date = time.Now()
+	check()
+}
